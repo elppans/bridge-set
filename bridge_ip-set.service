@@ -1,0 +1,12 @@
+[Unit]
+Description=Configuração de Interface Bridge
+After=network.target
+After=NetworkManager.service
+
+[Service]
+Type=oneshot
+ExecStart=/opt/bridge_ip/bridge_ip-set
+
+[Install]
+WantedBy=multi-user.target
+

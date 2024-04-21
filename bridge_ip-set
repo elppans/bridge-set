@@ -1,0 +1,71 @@
+#!/bin/bash
+
+# Verifica se os comandos necessários estão disponíveis
+if ! command -v ip >/dev/null || ! command -v nmcli >/dev/null ; then
+    echo "Erro: Este script requer 'iproute2' e 'NetworkManager'.."
+    echo "Por favor, instale as dependências antes de executar o script."
+    exit 1
+fi
+
+# Verifica se o usuário especificou a Interface manualmente ou se o arquivo contém um Interface
+if [ -n "$2" ]; then
+    interfaces="$2"
+    main_interface="$interfaces"
+    main_connection="$(nmcli c show | grep ether | awk '{print $1}')"
+elif [ -f "/opt/bridge_ip/bridge_iface.conf" ]; then
+    interfaces=$(cat "/opt/bridge_ip/bridge_iface.conf")
+    main_interface="$interfaces"
+    main_connection="$(nmcli c show | grep ether | awk '{print $1}')"
+else
+# Detecta automaticamente as interfaces de rede físicas (ethernet)
+interfaces=$(ip link show up | awk -F ': ' '/^[0-9]+:/ {print $2}' | grep -v '^lo$\|^vmnet\|^vnet\|^virbr\|^br')
+
+# Seleciona a primeira interface detectada como a principal
+main_interface=$(echo "$interfaces" | head -n 1)
+
+# Seleciona o nome da interface NetworkManager
+main_connection="$(nmcli c show | grep ether | awk '{print $1}')"
+fi
+
+# Verifica se o usuário especificou um IP manualmente ou se o arquivo contém um IP
+if [ -n "$1" ]; then
+    bridge_ip="$1"
+elif [ -f "/opt/bridge_ip/bridge_ip.conf" ]; then
+    bridge_ip=$(cat "/opt/bridge_ip/bridge_ip.conf")
+else
+    # Calcula o IP aumentado em 1 (maior que o IP da interface principal)
+    nmcli connection up $main_connection
+    main_ip=$(ip addr show dev "$main_interface" | awk '/inet / {split($2, a, "/"); print a[1]}')
+    main_ip1=$(echo "$main_ip" | cut -d '.' -f 1)
+    main_ip2=$(echo "$main_ip" | cut -d '.' -f 2)
+    main_ip3=$(echo "$main_ip" | cut -d '.' -f 3)
+    main_ip_last_octet=$(echo "$main_ip" | cut -d '.' -f 4)
+    main_ip_last_octet_soma="$(expr 1 + $main_ip_last_octet)"
+    bridge_ip="$main_ip1.$main_ip2.$main_ip3.$main_ip_last_octet_soma"
+fi
+
+# Cria uma interface bridge
+ip link add br0 type bridge
+
+# Adiciona as interfaces físicas à bridge
+for iface in $interfaces; do
+    ip link set $iface up
+    ip link set $iface master br0
+done
+
+# Configura o IP fixo para a bridge
+ip address add dev br0 $bridge_ip/24
+
+# Ativa a bridge
+ip link set br0 up
+
+# Recarrega a interface
+nmcli connection reload $main_connection
+
+# Reinicia a interface
+nmcli c down $main_connection
+nmcli c up $main_connection
+
+# Exibe as informações da bridge
+ip addr show br0
+
