@@ -13,9 +13,9 @@ pkgdesc="Cria uma ponte de rede (bridge) para combinar várias interfaces em uma
 source=("bridge_ip-set"
         "bridge_ip-set.service"
         "bridge_ip.conf")
-sha256sums=("950af170e07549899cb243bb423eebea70e44bc9fc6662295a60ee7303dac7f9"
-            "759ecc08e71e9f609a67fe7089dee0fbaf9e3be2095861f8fa4998c3cc64ab14"
-            "5f0afd58ad4a7fcc8fb788e65e52aabd524a765dc85ce86d2cbd75f6fa014d38")
+sha256sums=("eb6a3e24df069ea34dc764cd308c183d504c8fa1cbaad5320c019dc986b81876"
+            "7c23123cc6d0367d829aa14955eb718f55b698621b0ec4e6747a2a913303499c"
+            "dbeceb6fc5fc8d3696839fcababc61ed2c4ed4ef917a77177fea47334d346a25")
 
 package() {
     #cd "${srcdir}"

@@ -5,8 +5,9 @@ After=NetworkManager.service
 
 [Service]
 Type=oneshot
+ExecStartPre=/bin/sleep 15
 ExecStart=/opt/bridge_ip/bridge_ip-set
 
 [Install]
-WantedBy=multi-user.target
+WantedBy=default.target
 

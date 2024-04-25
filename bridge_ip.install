@@ -9,7 +9,7 @@ Detecção Automática de Interfaces: Identifica todas as interfaces de rede fí
 Criação da Bridge: Gera uma nova interface de rede chamada br0, que atuará como a ponte.
 Adição de Interfaces: Incorpora as interfaces de rede físicas detectadas à ponte br0.
 Configuração de IP: Atribui um endereço IP fixo à ponte para garantir conectividade consistente.
-Ativação e Recarga: Ativa a ponte e recarrega as configurações da interface de rede para aplicar as mudanças.
+Ativação: Ativa a ponte.
 
 Para especificar um IP manualmente para a ponte, forneça o endereço IP como argumento ao executar o script:
 
@@ -19,12 +19,11 @@ Da mesma forma, para definir uma interface específica, passe o nome da interfac
 
 bridge_ip-set 192.168.15.115 eth0
 
-
 Para configurar um serviço que inicie automaticamente com o sistema, utilize o seguinte comando (Como Super Usuário):
 
 systemctl enable bridge_ip-set.service
 
-Recomendavel configurarar um IP manual da Interface Bridge para o Serviço
+Para configurarar um IP manual da Interface Bridge para o Serviço
 Edite o arquivo "/opt/bridge_ip/bridge_ip.conf" onde deve configurar as variáveis correspondentes
 
 END
