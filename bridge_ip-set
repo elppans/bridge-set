@@ -24,7 +24,7 @@ interfaces=${interfaces:-"$(ip link show up | awk -F ': ' '/^[0-9]+:/ {print $2}
 main_interface=$(echo "$interfaces" | head -n 1)
 
 # Seleciona a rota da Interface detectada
-main_route="$(ip route show dev $main_interface | awk '/default/ {print $3}')"
+main_route="$(ip route show dev "$main_interface" | awk '/default/ {print $3}')"
 fi
 
 # Verifica se o usuário especificou um IP manualmente ou se o arquivo contém um IP
@@ -38,7 +38,8 @@ else
     main_ip2=$(echo "$main_ip" | cut -d '.' -f 2)
     main_ip3=$(echo "$main_ip" | cut -d '.' -f 3)
     main_ip_last_octet=$(echo "$main_ip" | cut -d '.' -f 4)
-    main_ip_last_octet_soma="$(expr 1 + $main_ip_last_octet)"
+    # shellcheck disable=SC2003
+    main_ip_last_octet_soma="${1 + $main_ip_last_octet}"
     bridge_ip=${bridge_ip:-"$main_ip1.$main_ip2.$main_ip3.$main_ip_last_octet_soma/24"}
     bridge_mask=${bridge_mask:-""}
     bridge_gw=${bridge_gw:-"$main_route"}
@@ -49,21 +50,22 @@ ip link add br0 type bridge
 
 # Adiciona as interfaces físicas à Bridge
 for iface in $interfaces; do
-    ip link set $iface master br0
+    ip link set "$iface" master br0
     #ip link set $iface up
 done
 
 # Configura o IP fixo para a Bridge
-ip address add dev br0 $bridge_ip
+ip address add dev br0 "$bridge_ip"
 
 # Configura a máscara para a Bridge
-if [ ! -n "$bridge_mask" ]; then
-	ip address add dev br0 $bridge_mask
+# shellcheck disable=SC2236
+if [ -z "$bridge_mask" ]; then
+	ip address add dev br0 "$bridge_mask"
 fi
 
 # Configura o Gateway para a Bridge
-if [ ! -n "$bridge_gw" ]; then
-	sudo ip route add default via $bridge_gw
+if [ -z "$bridge_gw" ]; then
+	sudo ip route add default via "$bridge_gw"
 fi
 
 # Ativa a bridge
