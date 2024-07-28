@@ -1,4 +1,5 @@
-# Maintainer: Marcelo K. <marcelo.pdvtec@gmail.com>
+#  Maintainer: Marcelo K. <marcelo.pdvtec@gmail.com>
+# shellcheck disable=all
 
 pkgname=bridge_ip
 pkgver=1.0.0
