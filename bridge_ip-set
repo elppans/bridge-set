@@ -21,10 +21,12 @@ bridge_options=("$@")
 show_help() {
     echo "Uso: $0 [opções]"
     echo "Opções disponíveis:"
-    echo "  remove_bridge       - Remove a interface bridge 'br0'"
-    echo "  create_bridge       - Cria a interface bridge 'br0'"
-    echo "  restart_connection  - Reinicia a conexão de rede principal"
-    echo "  (nenhuma opção)     - Mostra o Help"
+    echo "  remove_bridge                       - Remove a interface bridge 'br0'"
+    echo "  create_bridge                       - Cria a interface bridge 'br0' e atribui um endereço IP"
+    echo "  create_bridge {IP}                  - Cria a interface bridge 'br0' e atribui um endereço IP especificado"
+    echo "  create_bridge {IP} {INTERFACE}      - Cria a interface bridge 'br0' e atribui um endereço IP e usa a interface de rede especificado"
+    echo "  restart_connection                  - Reinicia a conexão de rede principal"
+    echo "  (nenhuma opção)                     - Mostra o Help"
 }
 
 # Função para selecionar a interface de rede
