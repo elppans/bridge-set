@@ -32,7 +32,7 @@ show_help() {
 # Função para verificar se é superusuário
 check_superuser() {
     if [ "$(id -u)" != "0" ]; then
-        echo "Este script deve ser executado como superusuário (root)."
+        echo "Este parâmetro deve ser executado como superusuário (root)."
         exit 1
     fi
 }
