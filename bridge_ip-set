@@ -29,6 +29,14 @@ show_help() {
     echo "  (nenhuma opção)                     - Mostra o Help"
 }
 
+# Função para verificar se é superusuário
+check_superuser() {
+    if [ "$(id -u)" != "0" ]; then
+        echo "Este script deve ser executado como superusuário (root)."
+        exit 1
+    fi
+}
+
 # Função para selecionar a interface de rede
 set_interfaces() {
     # Verifica se o usuário especificou a Interface manualmente ou se o arquivo contém um Interface
@@ -54,6 +62,7 @@ set_interfaces() {
 
 # Função para configurar um IP livre ou especifico para a interface Bridge
 set_bridge() {
+    # Chama a função para setar a interface
     set_interfaces
     # Verifica se o usuário especificou um IP manualmente ou se o arquivo contém um IP
     if [ -n "$2" ]; then
@@ -77,6 +86,9 @@ set_bridge() {
 
 # Função para criar a interface Bridge
 create_bridge() {
+    # Chama a função para verificar se é superusuário
+    check_superuser
+    # Chama a função para setar a interface Bridge
     set_bridge
     # Cria uma interface bridge
     ip link add br0 type bridge
@@ -110,6 +122,9 @@ create_bridge() {
 
 # Função para remover a interface Bridge
 remove_bridge() {
+    # Chama a função para verificar se é superusuário
+    check_superuser
+    # Chama a função para setar a interface
     set_interfaces
     sudo ip link set br0 down
     sudo brctl delif br0 "$main_interface"
@@ -118,6 +133,7 @@ remove_bridge() {
 
 # Função para reiniciar a interface de rede
 restart_connection() {
+    # Chama a função para setar a interface
     set_interfaces
     local connection
     connection="$(nmcli -t -f GENERAL.CONNECTION device show "$main_interface" | cut -f "2" -d ":")"
