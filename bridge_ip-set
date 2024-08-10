@@ -91,16 +91,31 @@ ip addr show br0
 }
 
 remove_bridge() {
+set_interfaces
 sudo ip link set br0 down
 sudo brctl delif br0 "$main_interface"
 sudo brctl delbr br0
+}
+
+restart_connection() {
+set_interfaces
+connection="$(nmcli -t -f GENERAL.CONNECTION device show "$main_interface" | cut -f "2" -d ":")"
+local connection
+
+nmcli connection down "${connection}"
+nmcli connection up "${connection}"
+
 
 }
 # shellcheck disable=SC2128
-if [ "$bridge_options" == "remove" ]; then
-    set_interfaces
+if [ "$bridge_options" == "remove_bridge" ]; then
+    # Remove a interface bridge "br0"
     remove_bridge
+elif [ "$bridge_options" == "restart_connection" ]; then
+    # Reinicia a conexão de rede principal
+    restart_connection
 else
+    # Cria a interface bridge "br0"
     set_interfaces 
     set_bridge
     create_bridge
