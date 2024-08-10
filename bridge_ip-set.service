@@ -7,8 +7,8 @@ After=NetworkManager.service
 Type=oneshot
 RemainAfterExit=true
 StandardOutput=journal
+ExecStartPre=/bin/sleep 5
 ExecStart=/opt/bridge_ip/bridge_ip-set create_bridge
-ExecStartPre=/bin/sleep 30
 ExecStart=/opt/bridge_ip/bridge_ip-set restart_connection
 
 [Install]
