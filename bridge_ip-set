@@ -8,7 +8,8 @@ if ! command -v ip >/dev/null || ! command -v nmcli >/dev/null ; then
 fi
 
 if [ -f "/opt/bridge_ip/bridge_ip.conf" ]; then
-    . /opt/bridge_ip/bridge_ip.conf
+    # shellcheck source=/dev/null
+    source /opt/bridge_ip/bridge_ip.conf
 fi
 
 # Verifica se o usuário especificou a Interface manualmente ou se o arquivo contém um Interface
@@ -38,8 +39,7 @@ else
     main_ip2=$(echo "$main_ip" | cut -d '.' -f 2)
     main_ip3=$(echo "$main_ip" | cut -d '.' -f 3)
     main_ip_last_octet=$(echo "$main_ip" | cut -d '.' -f 4)
-    # shellcheck disable=SC2003
-    main_ip_last_octet_soma="${1 + $main_ip_last_octet}"
+    main_ip_last_octet_soma="$((1 + main_ip_last_octet))"
     bridge_ip=${bridge_ip:-"$main_ip1.$main_ip2.$main_ip3.$main_ip_last_octet_soma/24"}
     bridge_mask=${bridge_mask:-""}
     bridge_gw=${bridge_gw:-"$main_route"}
