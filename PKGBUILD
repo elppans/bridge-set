@@ -2,7 +2,7 @@
 # shellcheck disable=all
 
 pkgname=bridge_ip
-pkgver=1.0.0
+pkgver=1.0.1
 pkgrel=1
 arch=('any')
 license=('CUSTOM')
@@ -14,8 +14,8 @@ pkgdesc="Cria uma ponte de rede (bridge) para combinar várias interfaces em uma
 source=("bridge_ip-set"
         "bridge_ip-set.service"
         "bridge_ip.conf")
-sha256sums=("eb6a3e24df069ea34dc764cd308c183d504c8fa1cbaad5320c019dc986b81876"
-            "7c23123cc6d0367d829aa14955eb718f55b698621b0ec4e6747a2a913303499c"
+sha256sums=("3d4a9468ba5513ca9456200cd65c082a398b54c024adc606a3bd5abac041e875"
+            "35a7b1d541698a08146b741d865fdc952491566c26db25f3b8bc495cda0e76fc"
             "dbeceb6fc5fc8d3696839fcababc61ed2c4ed4ef917a77177fea47334d346a25")
 
 package() {
