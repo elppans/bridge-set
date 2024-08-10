@@ -1,13 +1,15 @@
 [Unit]
-Description=Configuração de Interface Bridge
+Description=Configuração da interface bridge e reinício da conexão
 After=network.target
 After=NetworkManager.service
 
 [Service]
 Type=oneshot
-ExecStartPre=/bin/sleep 15
-ExecStart=/opt/bridge_ip/bridge_ip-set
+RemainAfterExit=true
+StandardOutput=journal
+ExecStart=/opt/bridge_ip/bridge_ip-set create_bridge
+ExecStartPre=/bin/sleep 30
+ExecStart=/opt/bridge_ip/bridge_ip-set restart_connection
 
 [Install]
 WantedBy=default.target
-
