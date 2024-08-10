@@ -1,6 +1,7 @@
 #!/bin/bash
 # shellcheck disable=SC2119
 # shellcheck disable=SC2120
+# shellcheck disable=SC2128
 
 # Verifica se os comandos necessários estão disponíveis
 if ! command -v ip >/dev/null || ! command -v nmcli >/dev/null; then
@@ -16,107 +17,124 @@ fi
 
 bridge_options=("$@")
 
+# Função para exibir informações de ajuda
+show_help() {
+    echo "Uso: $0 [opções]"
+    echo "Opções disponíveis:"
+    echo "  remove_bridge       - Remove a interface bridge 'br0'"
+    echo "  create_bridge       - Cria a interface bridge 'br0'"
+    echo "  restart_connection  - Reinicia a conexão de rede principal"
+    echo "  (nenhuma opção)     - Mostra o Help"
+}
+
+# Função para selecionar a interface de rede
 set_interfaces() {
-# Verifica se o usuário especificou a Interface manualmente ou se o arquivo contém um Interface
-if [ -n "$2" ]; then
-    interfaces="$2"
-    main_interface="$interfaces"
-    export main_interface
-else
+    # Verifica se o usuário especificou a Interface manualmente ou se o arquivo contém um Interface
+    if [ -n "$3" ]; then
+        interfaces="$3"
+        main_interface="$interfaces"
+        export main_interface
+    else
 
-    # Detecta automaticamente as interfaces de rede físicas (ethernet)
-    interfaces=${interfaces:-"$(ip link show up | awk -F ': ' '/^[0-9]+:/ {print $2}' | grep -v '^lo$\|^vmnet\|^vnet\|^virbr\|^br')"}
-    export interfaces
+        # Detecta automaticamente as interfaces de rede físicas (ethernet)
+        interfaces=${interfaces:-"$(ip link show up | awk -F ': ' '/^[0-9]+:/ {print $2}' | grep -v '^lo$\|^vmnet\|^vnet\|^virbr\|^br')"}
+        export interfaces
 
-    # Seleciona a primeira interface detectada como a principal
-    main_interface=$(echo "$interfaces" | head -n 1)
-    export main_interface
+        # Seleciona a primeira interface detectada como a principal
+        main_interface=$(echo "$interfaces" | head -n 1)
+        export main_interface
 
-    # Seleciona a rota da Interface detectada
-    main_route="$(ip route show dev "$main_interface" | awk '/default/ {print $3}')"
-    export main_route
-fi
+        # Seleciona a rota da Interface detectada
+        main_route="$(ip route show dev "$main_interface" | awk '/default/ {print $3}')"
+        export main_route
+    fi
 }
 
+# Função para configurar um IP livre ou especifico para a interface Bridge
 set_bridge() {
-# Verifica se o usuário especificou um IP manualmente ou se o arquivo contém um IP
-if [ -n "$1" ]; then
-    bridge_ip="$1"
-    export bridge_ip
-else
-    # Calcula o IP aumentado em 1 (maior que o IP da interface principal)
+    set_interfaces
+    # Verifica se o usuário especificou um IP manualmente ou se o arquivo contém um IP
+    if [ -n "$2" ]; then
+        bridge_ip="$2"
+        export bridge_ip
+    else
+        # Calcula o IP aumentado em 1 (maior que o IP da interface principal)
 
-    main_ip=$(ip addr show dev "$main_interface" | awk '/inet / {split($2, a, "/"); print a[1]}')
-    main_ip1=$(echo "$main_ip" | cut -d '.' -f 1)
-    main_ip2=$(echo "$main_ip" | cut -d '.' -f 2)
-    main_ip3=$(echo "$main_ip" | cut -d '.' -f 3)
-    main_ip_last_octet=$(echo "$main_ip" | cut -d '.' -f 4)
-    main_ip_last_octet_soma="$((1 + main_ip_last_octet))"
-    bridge_ip=${bridge_ip:-"$main_ip1.$main_ip2.$main_ip3.$main_ip_last_octet_soma/24"}
-    bridge_mask=${bridge_mask:-""}
-    bridge_gw=${bridge_gw:-"$main_route"}
-    export bridge_gw
-fi
+        main_ip=$(ip addr show dev "$main_interface" | awk '/inet / {split($2, a, "/"); print a[1]}')
+        main_ip1=$(echo "$main_ip" | cut -d '.' -f 1)
+        main_ip2=$(echo "$main_ip" | cut -d '.' -f 2)
+        main_ip3=$(echo "$main_ip" | cut -d '.' -f 3)
+        main_ip_last_octet=$(echo "$main_ip" | cut -d '.' -f 4)
+        main_ip_last_octet_soma="$((1 + main_ip_last_octet))"
+        bridge_ip=${bridge_ip:-"$main_ip1.$main_ip2.$main_ip3.$main_ip_last_octet_soma/24"}
+        bridge_mask=${bridge_mask:-""}
+        bridge_gw=${bridge_gw:-"$main_route"}
+        export bridge_gw
+    fi
 }
 
+# Função para criar a interface Bridge
 create_bridge() {
-# Cria uma interface bridge
-ip link add br0 type bridge
+    set_bridge
+    # Cria uma interface bridge
+    ip link add br0 type bridge
 
-# Adiciona as interfaces físicas à Bridge
-for iface in $interfaces; do
-    ip link set "$iface" master br0
-    #ip link set $iface up
-done
+    # Adiciona as interfaces físicas à Bridge
+    for iface in $interfaces; do
+        ip link set "$iface" master br0
+        #ip link set $iface up
+    done
 
-# Configura o IP fixo para a Bridge
-ip address add dev br0 "$bridge_ip"
+    # Configura o IP fixo para a Bridge
+    ip address add dev br0 "$bridge_ip"
 
-# Configura a máscara para a Bridge
-# shellcheck disable=SC2236
-if [ -z "$bridge_mask" ]; then
-    ip address add dev br0 "$bridge_mask"
-fi
+    # Configura a máscara para a Bridge
+    # shellcheck disable=SC2236
+    if [ -z "$bridge_mask" ]; then
+        ip address add dev br0 "$bridge_mask"
+    fi
 
-# Configura o Gateway para a Bridge
-if [ -z "$bridge_gw" ]; then
-    sudo ip route add default via "$bridge_gw"
-fi
+    # Configura o Gateway para a Bridge
+    if [ -z "$bridge_gw" ]; then
+        sudo ip route add default via "$bridge_gw"
+    fi
 
-# Ativa a bridge
-ip link set br0 up
+    # Ativa a bridge
+    ip link set br0 up
 
-# Exibe as informações da bridge
-ip addr show br0
+    # Exibe as informações da bridge
+    ip addr show br0
 }
 
+# Função para remover a interface Bridge
 remove_bridge() {
-set_interfaces
-sudo ip link set br0 down
-sudo brctl delif br0 "$main_interface"
-sudo brctl delbr br0
+    set_interfaces
+    sudo ip link set br0 down
+    sudo brctl delif br0 "$main_interface"
+    sudo brctl delbr br0
 }
 
+# Função para reiniciar a interface de rede
 restart_connection() {
-set_interfaces
-connection="$(nmcli -t -f GENERAL.CONNECTION device show "$main_interface" | cut -f "2" -d ":")"
-local connection
-
-nmcli connection down "${connection}"
-nmcli connection up "${connection}"
-
-
+    set_interfaces
+    local connection
+    connection="$(nmcli -t -f GENERAL.CONNECTION device show "$main_interface" | cut -f "2" -d ":")"
+    nmcli connection down "${connection}"
+    nmcli connection up "${connection}"
 }
-# shellcheck disable=SC2128
+
+# Verifica as opções e executa a função apropriada
 if [ "$bridge_options" == "remove_bridge" ]; then
     # Remove a interface bridge "br0"
     remove_bridge
 elif [ "$bridge_options" == "restart_connection" ]; then
     # Reinicia a conexão de rede principal
     restart_connection
-else
+elif [ "$bridge_options" == "create_bridge" ]; then
     # Cria a interface bridge "br0"
-    set_interfaces 
-    set_bridge
     create_bridge
+else
+    # Mostra o Help
+    show_help
 fi
+
