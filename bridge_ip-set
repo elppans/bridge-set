@@ -18,6 +18,8 @@ fi
 bridge_options=("$1")
 bridge_ip="${bridge_ip:-$2}"
 interfaces="${interfaces:-$3}"
+bridge_mask=${bridge_mask:-""}
+bridge_gw=${bridge_gw:-""}
 
 # Função para exibir informações de ajuda
 show_help() {
@@ -57,6 +59,11 @@ set_interfaces() {
         # Seleciona a rota da Interface detectada
         main_route="$(ip route show dev "$main_interface" | awk '/default/ {print $3}')"
         export main_route
+        bridge_gw=${bridge_gw:-"$main_route"}
+        export bridge_gw
+
+        main_ip=$(ip addr show dev "$main_interface" | awk '/inet / {print $2}')
+        export main_ip
     fi
 }
 
@@ -68,11 +75,8 @@ set_bridge() {
     if [ -n "$bridge_ip" ]; then
         ip_config="1"
         export ip_config
-        bridge_mask=${bridge_mask:-""}
-        bridge_gw=${bridge_gw:-"$main_route"}
-    # else
+    #  else
     #     # Calcula o IP aumentado em 1 (maior que o IP da interface principal)
-    #     main_ip=$(ip addr show dev "$main_interface" | awk '/inet / {split($2, a, "/"); print a[1]}')
     #     main_ip1=$(echo "$main_ip" | cut -d '.' -f 1)
     #     main_ip2=$(echo "$main_ip" | cut -d '.' -f 2)
     #     main_ip3=$(echo "$main_ip" | cut -d '.' -f 3)
@@ -91,24 +95,21 @@ create_bridge() {
     check_superuser
     # Chama a função para setar a interface Bridge
     set_bridge
-# Crie uma nova ponte e altere seu estado para up:
-ip link add name br0 type bridge
-ip link set dev br0 up
+    # Crie uma nova ponte e altere seu estado para up:
+    ip link add name br0 type bridge
+    ip link set dev br0 up
 
-if [ "$ip_config" == "1" ]; then
-    set_ip_bridge
-fi
     # Adiciona as interfaces físicas à Bridge
     for iface in $interfaces; do
-	# Para adicionar uma interface (por exemplo, eth0) à ponte, seu estado deve ser up: eth0
-	ip link set "$iface" up
-	# A adição da interface à ponte é feita definindo seu mestre como: bridge_name
-	# Até aqui, a ponte já deve funcionar
-    ip link set "$iface" master br0
+        export iface
+        # Para adicionar uma interface (por exemplo, eth0) à ponte, seu estado deve ser up: eth0
+        ip link set "$iface" up
+        # A adição da interface à ponte é feita definindo seu mestre como: bridge_name
+        # Até aqui, a ponte já deve funcionar
+        ip link set "$iface" master br0
     done
 
-    # Mostrar as bridges existentes e as interfaces associadas, usando o utilitário bridge (parte do iproute2).
-	bridge link
+    set_ip_bridge
 }
 
 # Função para configurar IP na interface Bridge
@@ -117,28 +118,46 @@ set_ip_bridge() {
     check_superuser
     # Chama a função para setar a interface Bridge
     #set_bridge
+    if [ "$ip_config" == "1" ]; then
+        # Configura o IP fixo na interface Bridge
+        ip address add dev br0 "$bridge_ip"
 
-    # Configura o IP fixo para a Bridge
-    ip address add dev br0 "$bridge_ip"
+        # Configura a máscara na interface Bridge
+        # shellcheck disable=SC2236
+        if [ -n "$bridge_mask" ]; then
+            ip address add dev br0 "$bridge_mask"
+        fi
 
-    # Configura a máscara para a Bridge
-    # shellcheck disable=SC2236
-    if [ -z "$bridge_mask" ]; then
-        ip address add dev br0 "$bridge_mask"
+        # Configura o Gateway na interface Bridge
+        if [ -n "$bridge_gw" ]; then
+            #ip route add default via "$bridge_gw"
+            #ip route append default via "$bridge_gw" dev br0
+            ip route add default via "$bridge_gw" dev br0 metric 100
+        fi
+    else
+        # Configurar IP via DHCPD na interface Bridge
+        sudo /usr/bin/dhcpcd br0
     fi
 
-    # Configura o Gateway para a Bridge
-    if [ -z "$bridge_gw" ]; then
-        #ip route add default via "$bridge_gw"
-        ip route append default via "$bridge_gw" dev br0
-    fi
+    # Remover Default Gateway da interface de rede
+    sudo ip route del default via "$bridge_gw" dev "$main_interface"
 
+    # Remover IP da interface de rede
+    sudo ip addr del "$main_ip" dev "$main_interface"
     # Ativa a bridge
     #ip link set br0 up
     #ip link set "$iface" master br0
 
-    # Exibe as informações da bridge
+    # Exibe informações da interface de rede
+    ip addr show "$main_interface"
+
+    # Exibe as informações da interface Bridge
     ip addr show br0
+
+    # Exibe as informações da rota
+    ip route
+    # Mostrar as bridges existentes e as interfaces associadas, usando o utilitário bridge (parte do iproute2).
+    bridge link
 }
 
 # Função para remover a interface Bridge
@@ -150,6 +169,12 @@ remove_bridge() {
     sudo ip link set br0 down
     sudo brctl delif br0 "$main_interface"
     sudo brctl delbr br0
+
+    # Exibe informações da interface de rede
+    ip addr show "$main_interface"
+
+    # Exibe as informações da rota
+    ip route
 }
 
 # Função para reiniciar a interface de rede
@@ -172,12 +197,7 @@ elif [ "$bridge_options" == "restart_connection" ]; then
 elif [ "$bridge_options" == "create_bridge" ]; then
     # Cria a interface bridge
     create_bridge
-elif [ "$bridge_options" == "create_bridge_ip" ]; then
-    # Cria e configura um IP a interface bridge
-    create_bridge
-    set_ip_bridge
 else
     # Mostra o Help
     show_help
 fi
-
