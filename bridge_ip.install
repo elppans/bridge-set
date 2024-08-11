@@ -1,8 +1,8 @@
 post_install() {
-
+  systemctl daemon-reload
   cat <<END
 
-O script bridge_ip-set instalado com sucesso...
+O bridge_ip-set foi instalado com sucesso...
 Faça o comando "bridge_ip-set" sem parametros para ver o help;
 Para mais informações, acesse o README no github.
 
