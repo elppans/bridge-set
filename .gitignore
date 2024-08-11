@@ -1,0 +1,9 @@
+# Ignorar tudo
+*
+# Não ignorar arquivos específicos
+!/bridge_ip.conf
+!/bridge_ip.install
+!/bridge_ip-set
+!/bridge_ip-set.service
+!/PKGBUILD
+!/README.md
