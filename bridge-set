@@ -11,9 +11,9 @@ if ! command -v ip >/dev/null || ! command -v nmcli >/dev/null; then
 fi
 
 # Arquivo environment para configuração de IP FIXO para a Interface Bridge
-if [ -f "/opt/bridge_ip/bridge_ip.conf" ]; then
+if [ -f "/opt/bridge_ip/bridge-set.conf" ]; then
     # shellcheck source=/dev/null
-    source /opt/bridge_ip/bridge_ip.conf
+    source /opt/bridge_ip/bridge-set.conf
 fi
 
 # Variávis para a configuração da Interface Bridge
