@@ -11,8 +11,8 @@ RemainAfterExit=true
 StandardOutput=journal
 # 5 segundos deve ser suficiente, mas se enfrentar problemas, é uma boa idéia aumentar o tempo em "ExecStartPre".
 ExecStartPre=/bin/sleep 5
-ExecStart=/opt/bridge_ip/bridge_ip-set restart_connection
-ExecStart=/opt/bridge_ip/bridge_ip-set create_bridge
+ExecStart=/opt/bridge_ip/bridge-set restart_connection
+ExecStart=/opt/bridge_ip/bridge-set create_bridge
 
 [Install]
 WantedBy=default.target

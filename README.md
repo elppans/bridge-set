@@ -2,9 +2,9 @@
 
 ---
 
-# Script `bridge_ip-set`
+# Script `bridge-set`
 
-O script `bridge_ip-set` foi projetado para facilitar a criação e gerenciamento de uma ponte de rede em seu computador. Ao executá-lo, o script realiza as seguintes ações:
+O script `bridge-set` foi projetado para facilitar a criação e gerenciamento de uma ponte de rede em seu computador. Ao executá-lo, o script realiza as seguintes ações:
 
 1. **Detecção Automática de Interfaces:**
    - Identifica todas as interfaces de rede físicas disponíveis, como Ethernet.
@@ -26,31 +26,31 @@ O script `bridge_ip-set` foi projetado para facilitar a criação e gerenciament
 Criar uma rede Bridge com IP via DHCP, faça o comando:
 
 ```bash
-bridge_ip-set create_bridge
+bridge-set create_bridge
 ```
 
 Criar uma rede Bridge especificando um IP manualmente para a ponte:
 
 ```bash
-bridge_ip-set create_bridge 192.168.15.115/24
+bridge-set create_bridge 192.168.15.115/24
 ```
 
 Da mesma forma, para definir uma interface específica, passe o nome da interface após o IP:
 
 ```bash
-bridge_ip-set create_bridge 192.168.15.115/24 eth0
+bridge-set create_bridge 192.168.15.115/24 eth0
 ```
 
 Remover a rede Bridge:
 
 ```bash
-bridge_ip-set remove_bridge
+bridge-set remove_bridge
 ```
 
 Reiniciar a conexão de rede principal:
 
 ```bash
-bridge_ip-set restart_connection
+bridge-set restart_connection
 ```
 Se fizer o comando sem parâmetro algum, será direcionado ao "Help".
 
@@ -59,7 +59,7 @@ Se fizer o comando sem parâmetro algum, será direcionado ao "Help".
 Para configurar um serviço que inicie automaticamente com o sistema, utilize o seguinte comando (como superusuário):
 
 ```bash
-systemctl enable bridge_ip-set.service
+systemctl enable bridge-set.service
 ```
 
 ## Configuração do IP da Interface Bridge para o Serviço

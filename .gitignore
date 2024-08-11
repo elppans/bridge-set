@@ -3,7 +3,7 @@
 # Não ignorar arquivos específicos
 !/bridge_ip.conf
 !/bridge_ip.install
-!/bridge_ip-set
-!/bridge_ip-set.service
+!/bridge-set
+!/bridge-set.service
 !/PKGBUILD
 !/README.md
