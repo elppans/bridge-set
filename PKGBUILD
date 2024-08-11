@@ -2,7 +2,7 @@
 # shellcheck disable=all
 
 pkgname=bridge_ip
-pkgver=1.0.3
+pkgver=1.0.4
 pkgrel=1
 arch=('any')
 license=('CUSTOM')
