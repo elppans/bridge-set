@@ -15,7 +15,7 @@ source=("bridge_ip-set"
         "bridge_ip-set.service"
         "bridge_ip.conf")
 sha256sums=("997979a76b06a46ace94a9397ef56cc59b45c5d1b098cd23c842edd2567da121"
-            "35a7b1d541698a08146b741d865fdc952491566c26db25f3b8bc495cda0e76fc"
+            "ce076c35b831f539c76f1f01439e9e01976f9cb8c1d4e16d846961a8627ade2d"
             "84e025828b3757107bb05335b2ec6757c1aa7bf0106ebd2ffbaa2c625e6dadae")
 
 package() {
