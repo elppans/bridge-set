@@ -2,8 +2,8 @@
 # shellcheck disable=all
 
 pkgname=bridge-set
-pkgver=1.0.6
-pkgrel=2
+pkgver=1.0.7
+pkgrel=1
 arch=('any')
 license=('CUSTOM')
 install='bridge-set.install'
@@ -14,7 +14,7 @@ pkgdesc="Cria uma ponte de rede (bridge) para combinar várias interfaces em uma
 source=("${pkgname}"
         "${pkgname}.service"
         "${pkgname}.conf.pacnew")
-sha256sums=("6dd6105d184f5860471a8fb4c5c99dfce1b3db7a3c86ae7acf2ea988b35cab1e"
+sha256sums=("ad3d875a4bcdbc343f1f541eb50a84999067d790a5a6df3ba78593d1b3a97525"
             "76b652d916d91243990d6e571b389ae73438637ecf42a66ef481833613d88716"
             "750500b2290d85b4d46f864487f7f21374752a9af4bd35afdd3b411688b30418")
 
