@@ -3,7 +3,7 @@
 
 pkgname=bridge-set
 pkgver=1.0.7
-pkgrel=3
+pkgrel=4
 arch=('any')
 license=('CUSTOM')
 # install='bridge-set.install'
@@ -57,6 +57,7 @@ END
 	fi
 }
 
+cat > bridge-set.install <<EOF
 post_upgrade() {
     systemctl daemon-reload
 	# Caminho para o arquivo bridge-set.conf
@@ -80,3 +81,4 @@ O "${pkgname}" foi removido.
 
 END
 }
+EOF
