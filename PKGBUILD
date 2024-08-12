@@ -13,10 +13,10 @@ url="https://github.com/elppans/${pkgname}"
 pkgdesc="Cria uma ponte de rede (bridge) para combinar várias interfaces em uma única conexão."
 source=("${pkgname}"
         "${pkgname}.service"
-        "${pkgname}.conf")
-sha256sums=("af8453bd2d7d69a0baff4be07bad2c5b4097adb0e13e86f27478800878edef90"
-            "17b53b8d72a17548283c4851f8cd0971d9966e8dfb8d7619ccccf0666ac49759"
-            "fc278f47632cfbfc2fd479ab4ce0f5934c952baba86de7e49cfa29f322bf5465")
+        "${pkgname}.conf.pacnew")
+sha256sums=("b5d47c18ef4651c1b27c7dc937199002d90e3950fd48e78911d2eedb7652f931"
+            "76b652d916d91243990d6e571b389ae73438637ecf42a66ef481833613d88716"
+            "750500b2290d85b4d46f864487f7f21374752a9af4bd35afdd3b411688b30418")
 
 package() {
     #cd "${srcdir}"
