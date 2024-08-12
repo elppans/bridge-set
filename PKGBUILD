@@ -6,7 +6,7 @@ pkgver=1.0.7
 pkgrel=1
 arch=('any')
 license=('CUSTOM')
-install='bridge-set.install'
+# install='bridge-set.install'
 depends=('iproute2' 'networkmanager' 'bridge-utils' 'dhclient')
 optdepends=('dhcpcd')
 pkgdesc="Cria uma ponte de rede (bridge) para combinar várias interfaces em uma única conexão."
@@ -31,3 +31,37 @@ package() {
     install -m0644 $srcdir/${pkgname}.service "${pkgdir}/etc/systemd/system/${pkgname}.service"
 } 
 
+post_install() {
+	systemctl daemon-reload
+	cat <<END
+
+O bridge-set foi instalado com sucesso...
+Faça o comando "${pkgname}" sem parametros para ver o help;
+Para mais informações, acesse o README no github.
+
+END
+	# Caminho para o arquivo bridge-set.conf
+	bridgesetconf="/opt/${pkgname}/${pkgname}.conf"
+	bridgesetconfnew="/opt/${pkgname}/${pkgname}.conf.pacnew"
+
+	# Verifica se o arquivo existe
+	if [ -f "$bridgesetconf" ]; then
+		echo "warning: $bridgesetconf installed as $bridgesetconfnew"
+	else
+		# Renomeia o novo arquivo para o nome original
+		mv "$bridgesetconfnew" "$bridgesetconf"
+	fi
+}
+
+post_upgrade() {
+	post_install
+}
+
+post_remove() {
+
+	cat <<END
+
+O "${pkgname}" foi removido.
+
+END
+}
