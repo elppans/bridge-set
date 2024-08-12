@@ -3,7 +3,7 @@
 
 pkgname=bridge-set
 pkgver=1.0.7
-pkgrel=5
+pkgrel=6
 arch=('any')
 license=('CUSTOM')
 install='bridge-set.install'
@@ -35,6 +35,7 @@ package() {
 	install -m0644 "$srcdir/${pkgname}.service" "${pkgdir}/etc/systemd/system/${pkgname}.service"
 }
 
+cat > "${pkgname}.install" <<EOF
 post_install() {
 	systemctl daemon-reload
 	cat <<END
@@ -49,15 +50,14 @@ END
 	bridgesetconfnew="/opt/${pkgname}/${pkgname}.conf.pacnew"
 
 	# Verifica se o arquivo existe
-	if [ -f "$bridgesetconf" ]; then
-		echo "warning: $bridgesetconf installed as $bridgesetconfnew"
+	if [ -f "${bridgesetconf}" ]; then
+		echo "warning: ${bridgesetconf} installed as ${bridgesetconfnew}"
 	else
 		# Renomeia o novo arquivo para o nome original
-		mv "$bridgesetconfnew" "$bridgesetconf"
+		mv "${bridgesetconfnew}" "${bridgesetconf}"
 	fi
 }
 
-cat > bridge-set.install <<EOF
 post_upgrade() {
     systemctl daemon-reload
 	# Caminho para o arquivo bridge-set.conf
@@ -65,11 +65,11 @@ post_upgrade() {
 	bridgesetconfnew="/opt/${pkgname}/${pkgname}.conf.pacnew"
 
 	# Verifica se o arquivo existe
-	if [ -f "$bridgesetconf" ]; then
-		echo "warning: $bridgesetconf installed as $bridgesetconfnew"
+	if [ -f "${bridgesetconf}" ]; then
+		echo "warning: ${bridgesetconf} installed as ${bridgesetconfnew}"
 	else
 		# Renomeia o novo arquivo para o nome original
-		mv "$bridgesetconfnew" "$bridgesetconf"
+		mv "${bridgesetconfnew}" "${bridgesetconf}"
 	fi
 }
 
