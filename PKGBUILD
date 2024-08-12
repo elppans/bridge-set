@@ -3,7 +3,7 @@
 
 pkgname=bridge-set
 pkgver=1.0.7
-pkgrel=6
+pkgrel=7
 arch=('any')
 license=('CUSTOM')
 install='bridge-set.install'
@@ -50,27 +50,16 @@ END
 	bridgesetconfnew="/opt/${pkgname}/${pkgname}.conf.pacnew"
 
 	# Verifica se o arquivo existe
-	if [ -f "${bridgesetconf}" ]; then
-		echo "warning: ${bridgesetconf} installed as ${bridgesetconfnew}"
+	if [ -f "\${bridgesetconf}" ]; then
+		echo "warning: \${bridgesetconf} installed as \${bridgesetconfnew}"
 	else
 		# Renomeia o novo arquivo para o nome original
-		mv "${bridgesetconfnew}" "${bridgesetconf}"
+		mv "\${bridgesetconfnew}" "\${bridgesetconf}"
 	fi
 }
 
 post_upgrade() {
-    systemctl daemon-reload
-	# Caminho para o arquivo bridge-set.conf
-	bridgesetconf="/opt/${pkgname}/${pkgname}.conf"
-	bridgesetconfnew="/opt/${pkgname}/${pkgname}.conf.pacnew"
-
-	# Verifica se o arquivo existe
-	if [ -f "${bridgesetconf}" ]; then
-		echo "warning: ${bridgesetconf} installed as ${bridgesetconfnew}"
-	else
-		# Renomeia o novo arquivo para o nome original
-		mv "${bridgesetconfnew}" "${bridgesetconf}"
-	fi
+    post_install
 }
 
 post_remove() {
