@@ -68,7 +68,10 @@ Edite o arquivo `/opt/bridge-set/bridge-set.conf` e configure as variáveis corr
 
 - **interfaces**: (Opcional)Esta variável armazena uma lista de interfaces de rede físicas (como “eth0”, “eth1”, etc.).  
  
->Exemplo: interfaces="eth0"  
+Exemplo:  
+```bash
+interfaces="eth0"  
+```
 
 - **bridge_name**: Esta variável é usada para especificar o nome da bridge de rede.  
 Uma bridge é uma interface de rede virtual que combina várias interfaces físicas em uma única interface lógica.  
@@ -76,19 +79,26 @@ Ela permite que os pacotes de rede sejam encaminhados entre as interfaces físic
 O padrão para o nome da bridge costuma ser “br0”, mas você pode escolher um nome diferente, se desejar.   
 O importante é que o nome seja único e não conflite com outros dispositivos de rede.  
 Exemplo:   
->bridge_name="bridge0"  
-
+```bash
+bridge_name="bridge0"  
+```
 - **bridge_ip**: Essa variável define o endereço IP fixo para a bridge.
 Uso: Insira um endereço IP específico para a bridge e utilize um "prefixo de sub-rede"  
 O prefixo de sub-rede indica quantos bits da máscara de sub-rede são usados para identificar a rede.  
-Exemplo 1:  
->`bridge_ip="10.10.1.100/8"` (endereço IP com prefixo de sub-rede Classe A, "/8" (255.0.0.0))  
+Exemplos:  
+1) Endereço IP com prefixo de sub-rede Classe A, "/8" (255.0.0.0)
+```bash
+bridge_ip="10.10.1.100/8"
+```
+2) Endereço IP com prefixo de sub-rede Classe B, "/16" (255.255.0.0)  
+```bash
+bridge_ip="10.10.1.100/16"
+```
 
-Exemplo 2:  
->`bridge_ip="10.10.1.100/16"` (endereço IP com prefixo de sub-rede Classe B, "/16" (255.255.0.0))  
-
-Exemplo 2:  
->`bridge_ip="192.168.1.100/24"` (endereço IP com prefixo de sub-rede Classe C, "/24" (255.255.255.0))  
+3) Endereço IP com prefixo de sub-rede Classe C, "/24" (255.255.255.0)  
+```bash
+bridge_ip="192.168.1.100/24"
+```
 
 - **bridge_mask**: Esta variável define a máscara de sub-rede para a bridge.  
 Devido a adição do prefixo em "bridge_ip", não é necessário configurar a máscara.  
@@ -96,9 +106,10 @@ NÃO comente ou remova esta variável, ou o Gateway não irá funcionar.
 
 - **bridge_gw**: Esta variável define o gateway (roteador) para a bridge.  
 Exemplo:  
->bridge_gw="192.168.1.1"  
-
-Se foi configurado "bridge_ip", **deve** configurar o Gateway em "bridge_gw".  
+```bash
+bridge_gw="192.168.1.1"  
+```
+>Se foi configurado "bridge_ip", **deve** configurar o Gateway em "bridge_gw".  
 
 ---
 - **Observação**: No momento o Script foi configurado para ser usado em rede cabeada. Não tenho placa WiFi para testar **no momento**.  
