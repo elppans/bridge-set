@@ -26,14 +26,17 @@ bridge_gw=${bridge_gw:-""}
 
 # Função para exibir informações de ajuda
 show_help() {
-    echo "Uso: $0 [opções]"
-    echo "Opções disponíveis:"
-    echo "  create_bridge                       - Cria a interface bridge '$bridge_name' e atribui um endereço IP"
-    echo "  create_bridge {IP}                  - Cria a interface bridge '$bridge_name' e atribui um endereço IP especificado"
-    echo "  create_bridge {IP} {INTERFACE}      - Cria a interface bridge '$bridge_name' e atribui um endereço IP e usa a interface de rede especificado"
-    echo "  remove_bridge                       - Remove a interface bridge '$bridge_name'"
-    echo "  restart_connection                  - Reinicia a conexão de rede principal"
-    echo "  (nenhuma opção)                     - Mostra o Help"
+    cat <<-EOF
+    Uso: $0 [opções]
+
+    Opções:
+    -c|create|--create                        # Cria interface bridge $bridge_name e atribui IP automatico
+    -c|create|--create [<IP>                  # Cria interface bridge $bridge_name e atribui IP informado
+    -c|create|--create [<IP>] [<INTERFACE>]   # Cria interface bridge $bridge_name e atribui IP e usa a interface de rede especificado
+    -r|remove|--remove                        # Remove interface bridge $bridge_name
+    -s|restart|--restart                         # Reinicia a conexão de rede principal
+    -h|help|--help                            # Mostra este Help
+EOF
 }
 
 # Função para verificar se é Super Usuário
@@ -190,16 +193,25 @@ restart_connection() {
 }
 
 # Verifica as opções e executa a função apropriada
-if [ "$bridge_options" == "remove_bridge" ]; then
-    # Remove a interface bridge
-    remove_bridge
-elif [ "$bridge_options" == "restart_connection" ]; then
-    # Reinicia a conexão de rede principal
-    restart_connection
-elif [ "$bridge_options" == "create_bridge" ]; then
-    # Cria a interface bridge
+case "$bridge_options" in
+# Cria a interface bridge
+create_bridge | create | --create | -c)
     create_bridge
-else
-    # Mostra o Help
+    ;;
+# Remove a interface bridge
+remove_bridge | remove | --remove | -r)
+    remove_bridge
+    ;;
+# Reinicia a conexão de rede principal
+restart_bridge | restart | --restart | -s)
+    restart_connection
+    ;;
+# Mostra o Help
+help | --help | -h)
     show_help
-fi
+    ;;
+# Mostra o Help
+*)
+    show_help
+    ;;
+esac

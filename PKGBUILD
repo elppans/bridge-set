@@ -2,7 +2,7 @@
 # shellcheck disable=all
 
 pkgname=bridge-set
-pkgver=1.0.5
+pkgver=1.0.6
 pkgrel=1
 arch=('any')
 license=('CUSTOM')
@@ -14,7 +14,7 @@ pkgdesc="Cria uma ponte de rede (bridge) para combinar várias interfaces em uma
 source=("${pkgname}"
         "${pkgname}.service"
         "${pkgname}.conf.pacnew")
-sha256sums=("b5d47c18ef4651c1b27c7dc937199002d90e3950fd48e78911d2eedb7652f931"
+sha256sums=("786ccbae2eabde252016397fba202dd8ec978ae4ce1fb8b12c3e12d142d7389e"
             "76b652d916d91243990d6e571b389ae73438637ecf42a66ef481833613d88716"
             "750500b2290d85b4d46f864487f7f21374752a9af4bd35afdd3b411688b30418")
 
@@ -29,3 +29,4 @@ package() {
     install -m0644 $srcdir/${pkgname}.conf.pacnew "${pkgdir}/opt/${pkgname}/${pkgname}.conf.pacnew"
     install -m0644 $srcdir/${pkgname}.service "${pkgdir}/etc/systemd/system/${pkgname}.service"
 } 
+
