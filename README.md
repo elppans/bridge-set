@@ -64,7 +64,7 @@ systemctl enable bridge-set.service
 
 ## Configuração do IP da Interface Bridge para o Serviço
 
-Edite o arquivo `/opt/bridge_ip/bridge-set.conf` e configure as variáveis correspondentes.  
+Edite o arquivo `/opt/bridge-set/bridge-set.conf` e configure as variáveis correspondentes.  
 
 - **interfaces**: (Opcional)Esta variável armazena uma lista de interfaces de rede físicas (como “eth0”, “eth1”, etc.).  
  
