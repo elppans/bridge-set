@@ -1,7 +1,7 @@
 # Ignorar tudo
 *
 # Não ignorar arquivos específicos
-!/bridge-set.conf
+!/bridge-set.conf.pacnew
 !/bridge-set.install
 !/bridge-set
 !/bridge-set.service
