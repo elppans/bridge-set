@@ -1,9 +1,9 @@
 #  Maintainer: Marcelo K. <marcelo.pdvtec@gmail.com>
 # shellcheck disable=all
 
-pkgname=bridge_ip
-pkgver=1.0.4
-pkgrel=2
+pkgname=bridge-set
+pkgver=1.0.5
+pkgrel=1
 arch=('any')
 license=('CUSTOM')
 install='${pkgname}.install'
