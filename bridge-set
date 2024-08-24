@@ -103,7 +103,8 @@ show_help() {
 			-c|create|--create [<IP>                  # Cria interface bridge '$bridge_name' e atribui IP informado
 			-c|create|--create [<IP>] [<INTERFACE>]   # Cria interface bridge '$bridge_name' e atribui IP e usa a interface de rede especificado
 			-r|remove|--remove                        # Remove interface bridge '$bridge_name'
-			-s|restart|--restart                      # Reinicia a conexão de rede principal
+			-rc|restart|--restart                     # Reinicia a conexão de rede principal
+            -ra|restart-all|--restart-all             # Reinicia a conexão de rede principal e recria a rede bridge
 			-h|--help|help                            # Mostra este Help
 	EOF
 }
@@ -273,7 +274,7 @@ bridge_gw=${bridge_gw:-""}
 
 # Verifica as opções e executa a função apropriada
 case "$bridge_options" in
-# Remove a interface bridge
+# Cria a interface bridge
 create_bridge | create | --create | -c)
     check_superuser # Chama a função para verificar se é superusuário
     create_bridge
@@ -286,10 +287,17 @@ remove_bridge | remove | --remove | -r)
     ;;
 
 # Reinicia a conexão de rede principal
-restart_bridge | restart | --restart | -s)
+restart_connection | restart | --restart | -rc)
     restart_connection
     ;;
 
+# Reinicia a conexão de rede principal e bridge
+restart_bridge | restart-all | --restart-all | -ra)
+    check_superuser # Chama a função para verificar se é superusuário
+    remove_bridge
+    restart_connection
+    create_bridge
+    ;;
 *)
     show_help
     ;;
