@@ -28,8 +28,8 @@ package() {
 	mkdir -p "${pkgdir}/usr/bin"
 	mkdir -p "${pkgdir}/opt/${pkgname}"
 	# mkdir -p "${pkgdir}/etc/systemd/system"
-	mkdir -p "${pkgdir}/usr/lib/systemd/user
-	
+	mkdir -p "${pkgdir}/usr/lib/systemd/user"
+
 	#install -m0755 $srcdir/${pkgname} "${pkgdir}/opt/${pkgname}/${pkgname}"
 	#ln -sf "$pkgdir/opt/$pkgname/$pkgname" "$pkgdir/usr/bin/$pkgname"
 	install -m0755 "$srcdir/${pkgname}" "${pkgdir}/usr/bin/${pkgname}"
