@@ -3,7 +3,7 @@
 
 pkgname=bridge-set
 pkgver=1.0.8
-pkgrel=7
+pkgrel=8
 arch=('any')
 license=('CUSTOM')
 install='bridge-set.install'
@@ -15,7 +15,7 @@ source=("${pkgname}"
 	# "${pkgname}.service"
 	"${pkgname}.conf.pacnew")
 # source=("git+${url}.git")
-sha256sums=("6c8f71551b9592e93a4b19d1d4aa7cb47ba6a991b59b53337e640c34b3c136be"
+sha256sums=("0e8a2a925604555537172d8d8b0834fa36a5d63ab3f8f868b07bb28090882cb6"
 	# "76b652d916d91243990d6e571b389ae73438637ecf42a66ef481833613d88716"
 	"750500b2290d85b4d46f864487f7f21374752a9af4bd35afdd3b411688b30418")
 
@@ -45,9 +45,9 @@ After=NetworkManager.service
 [Service]
 Type=forking
 ExecStartPre=/bin/sleep 5
-ExecStart=/usr/bin/${pkgname} -ca
-ExecReload=/usr/bin/${pkgname} -ra
-ExecStop=/usr/bin/${pkgname} -sa
+ExecStart=/usr/bin/${pkgname} -c
+ExecReload=/usr/bin/${pkgname} -r
+ExecStop=/usr/bin/${pkgname} -s
 Restart=always
 RestartSec=3s
 

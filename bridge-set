@@ -102,8 +102,8 @@ show_help() {
 			-c|create|--create                        ${cyan}# Cria interface bridge ${yellow}'$bridge_name'${reset} e atribui IP automatico${reset}
 			-c|create|--create [<IP>                  # Cria interface bridge '$bridge_name' e atribui IP informado
 			-c|create|--create [<IP>] [<INTERFACE>]   # Cria interface bridge '$bridge_name' e atribui IP e usa a interface de rede especificado
-			-s|stop|--stop                            # Remove interface bridge '$bridge_name' ({-sa} +para reiniciar a conexão de rede principal)
-			-r|restart|--restart                      # Reinicia a conexão de rede principal ({-ra} +recria a rede bridge)
+			-r|restart|--restart                      # Reinicia a conexão de rede principal  e recria interface bridge '$bridge_name'
+			-s|stop|--stop                            # Remove interface bridge '$bridge_name'
 			-h|--help|help                            # Mostra este Help
 	EOF
 }
@@ -276,33 +276,21 @@ case "$bridge_options" in
 # Cria a interface bridge
 create_bridge | create | --create | -c)
     check_superuser # Chama a função para verificar se é superusuário
-    create_bridge
-    ;;
-# Reinicia a conexão de rede principal e Cria a interface bridge
-create_bridge_all | create-all | --create-all | -ca)
-    check_superuser # Chama a função para verificar se é superusuário
     restart_connection
     create_bridge
     ;;
-
 # Remove a interface bridge
 stop_bridge | stop | --stop | -s)
     check_superuser # Chama a função para verificar se é superusuário
     remove_bridge
-    ;;
-# Remove a interface bridge
-stop_bridge_all | stop-all | --stop-all | -sa)
-    check_superuser # Chama a função para verificar se é superusuário
-    remove_bridge
     restart_connection
     ;;
-
 # Reinicia a conexão de rede principal
 restart_connection | restart | --restart | -r)
-    restart_connection
-    ;;
+    # restart_connection
+    # ;;
 # Reinicia a conexão de rede principal e bridge
-restart_bridge_all | restart-all | --restart-all | -ra)
+# restart_bridge_all | restart-all | --restart-all | -ra)
     check_superuser # Chama a função para verificar se é superusuário
     remove_bridge
     restart_connection
