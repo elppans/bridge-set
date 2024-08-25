@@ -104,7 +104,7 @@ show_help() {
 			-c|create|--create [<IP>] [<INTERFACE>]   # Cria interface bridge '$bridge_name' e atribui IP e usa a interface de rede especificado
 			-r|remove|--remove                        # Remove interface bridge '$bridge_name'
 			-rc|restart|--restart                     # Reinicia a conexão de rede principal
-            -ra|restart-all|--restart-all             # Reinicia a conexão de rede principal e recria a rede bridge
+			-ra|restart-all|--restart-all             # Reinicia a conexão de rede principal e recria a rede bridge
 			-h|--help|help                            # Mostra este Help
 	EOF
 }

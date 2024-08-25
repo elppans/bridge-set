@@ -3,7 +3,7 @@
 
 pkgname=bridge-set
 pkgver=1.0.8
-pkgrel=4
+pkgrel=5
 arch=('any')
 license=('CUSTOM')
 install='bridge-set.install'
@@ -15,7 +15,7 @@ source=("${pkgname}"
 	# "${pkgname}.service"
 	"${pkgname}.conf.pacnew")
 # source=("git+${url}.git")
-sha256sums=("ccddec0598c537dabdce20e0eb139585fe80436a0e4aeaf3667290c4bba75400"
+sha256sums=("e8893208b241bdc21c23310b44cdc37fe8086d4192099dec92884febe54d29aa"
 	# "76b652d916d91243990d6e571b389ae73438637ecf42a66ef481833613d88716"
 	"750500b2290d85b4d46f864487f7f21374752a9af4bd35afdd3b411688b30418")
 
