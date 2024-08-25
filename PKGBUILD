@@ -45,7 +45,7 @@ After=NetworkManager.service
 [Service]
 Type=forking
 ExecStartPre=/bin/sleep 5
-ExecStart=/usr/bin/${pkgname}" create_bridge
+ExecStart=/usr/bin/${pkgname} create_bridge
 Restart=always
 RestartSec=3s
 
