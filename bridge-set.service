@@ -4,15 +4,14 @@ Description=Configuração da Interface Bridge
 After=network.target
 After=NetworkManager.service
 
-# Comando para reiniciar a conexão e criar a bridge
+# Comando para criar a bridge
 [Service]
-Type=oneshot
-RemainAfterExit=true
-StandardOutput=journal
-# 5 segundos deve ser suficiente, mas se enfrentar problemas, é uma boa idéia aumentar o tempo em "ExecStartPre".
+Type=forking
 ExecStartPre=/bin/sleep 5
-ExecStart=/opt/bridge-set/bridge-set restart_connection
 ExecStart=/opt/bridge-set/bridge-set create_bridge
+Restart=always
+RestartSec=3s
 
+# serviço será executado durante a inicialização padrão do sistema
 [Install]
 WantedBy=default.target
