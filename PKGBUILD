@@ -3,7 +3,7 @@
 
 pkgname=bridge-set
 pkgver=1.0.8
-pkgrel=2
+pkgrel=3
 arch=('any')
 license=('CUSTOM')
 install='bridge-set.install'
@@ -27,15 +27,15 @@ package() {
 	#cd "${srcdir}"
 	mkdir -p "${pkgdir}/usr/bin"
 	mkdir -p "${pkgdir}/opt/${pkgname}"
-	# mkdir -p "${pkgdir}/etc/systemd/system"
-	mkdir -p "${pkgdir}/usr/lib/systemd/user"
+	mkdir -p "${pkgdir}/etc/systemd/system"
+	# mkdir -p "${pkgdir}/usr/lib/systemd/user"
 
 	#install -m0755 $srcdir/${pkgname} "${pkgdir}/opt/${pkgname}/${pkgname}"
 	#ln -sf "$pkgdir/opt/$pkgname/$pkgname" "$pkgdir/usr/bin/$pkgname"
 	install -m0755 "$srcdir/${pkgname}" "${pkgdir}/usr/bin/${pkgname}"
 	install -m0644 "$srcdir/${pkgname}.conf.pacnew" "${pkgdir}/opt/${pkgname}/${pkgname}.conf.pacnew"
-	# install -m0644 "$srcdir/${pkgname}.service" "${pkgdir}/etc/systemd/system/${pkgname}.service"
-	install -m0644 "$srcdir/${pkgname}.service" "${pkgdir}/usr/lib/systemd/user/${pkgname}.service"
+	install -m0644 "$srcdir/${pkgname}.service" "${pkgdir}/etc/systemd/system/${pkgname}.service"
+	# install -m0644 "$srcdir/${pkgname}.service" "${pkgdir}/usr/lib/systemd/user/${pkgname}.service"
 }
 
 cat > "${pkgname}.install" <<EOF
