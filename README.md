@@ -102,7 +102,7 @@ Exemplo:
 bridge_name="bridge0"  
 ```
 - **bridge_ip**: Essa variável define o endereço IP fixo para a bridge.  
-Uso: Insira um endereço IP específico para a bridge e utilize um "prefixo de sub-rede"  
+Uso: Insira um `endereço IP` específico para a bridge e utilize um "`prefixo de sub-rede`"  
 O prefixo de sub-rede indica quantos bits da máscara de sub-rede são usados para identificar a rede.  
 Exemplos:  
 1) Endereço IP com prefixo de sub-rede Classe A, "/8" (255.0.0.0)
