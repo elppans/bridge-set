@@ -26,33 +26,40 @@ O script `bridge-set` foi projetado para facilitar a criação e gerenciamento d
 Criar uma rede Bridge com IP via DHCP, faça o comando:
 
 ```bash
-bridge-set create_bridge
+bridge-set -c
 ```
 
 Criar uma rede Bridge especificando um IP manualmente para a ponte:
 
 ```bash
-bridge-set create_bridge 192.168.15.115/24
+bridge-set -c 192.168.15.115/24
 ```
 
 Da mesma forma, para definir uma interface específica, passe o nome da interface após o IP:
 
 ```bash
-bridge-set create_bridge 192.168.15.115/24 eth0
+bridge-set -c 192.168.15.115/24 eth0
 ```
 
 Remover a rede Bridge:
 
 ```bash
-bridge-set remove_bridge
+bridge-set -s
 ```
 
-Reiniciar a conexão de rede principal:
+Reiniciar a conexão de rede principal e rede Bridge:
 
 ```bash
-bridge-set restart_connection
+bridge-set -r
 ```
-Se fizer o comando sem parâmetro algum, será direcionado ao "Help".
+
+Verificar opções de comando:
+
+```bash
+bridge-set -h
+```
+
+>Se fizer o comando sem parâmetro algum, será direcionado ao "Help".
 
 ## Configuração de Serviço
 
@@ -61,8 +68,20 @@ Para configurar um serviço que inicie automaticamente com o sistema, utilize o 
 ```bash
 systemctl enable bridge-set.service
 ```
+Para iniciar o serviço (start), utilize o seguinte comando (como superusuário):
+>O mesmo para parar (stop) e reiniciar (restart)
 
-## Configuração do IP da Interface Bridge para o Serviço
+```bash
+systemctl start bridge-set.service
+```
+
+Para verificar o status do serviço, utilize o seguinte comando:
+
+```bash
+systemctl status bridge-set.service
+```
+
+## Configuração do IP FIXO da Interface Bridge para o Serviço
 
 Edite o arquivo `/opt/bridge-set/bridge-set.conf` e configure as variáveis correspondentes.  
 
@@ -76,7 +95,7 @@ interfaces="eth0"
 - **bridge_name**: Esta variável é usada para especificar o nome da bridge de rede.  
 Uma bridge é uma interface de rede virtual que combina várias interfaces físicas em uma única interface lógica.  
 Ela permite que os pacotes de rede sejam encaminhados entre as interfaces físicas associadas à bridge.  
-O padrão para o nome da bridge costuma ser “br0”, mas você pode escolher um nome diferente, se desejar.   
+O padrão para o nome da bridge costuma ser “**br0**”, mas você pode escolher um nome diferente, se desejar.   
 O importante é que o nome seja único e não conflite com outros dispositivos de rede.  
 Exemplo:   
 ```bash
@@ -112,5 +131,5 @@ bridge_gw="192.168.1.1"
 >Se foi configurado "bridge_ip", **deve** configurar o Gateway em "bridge_gw".  
 
 ---
-- **Observação**: No momento o Script foi configurado para ser usado em rede cabeada. Não tenho placa WiFi para testar **no momento**.  
+- **Observação**: O Script foi configurado para ser usado em rede cabeada. Não tenho placa WiFi para testar **no momento**.  
 ___
