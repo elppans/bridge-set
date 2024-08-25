@@ -3,7 +3,7 @@
 
 pkgname=bridge-set
 pkgver=1.0.8
-pkgrel=5
+pkgrel=6
 arch=('any')
 license=('CUSTOM')
 install='bridge-set.install'
