@@ -250,10 +250,15 @@ restart_connection() {
 
 test_connection() {
     while true; do
-        if ! ping "$host_dns" -c 1 -w 3; then
-            restart_connection
-        fi
+        if ping "$host_dns" -c 1 -w 3 &>>/dev/null; then
         sleep "$host_time"
+        fi
+    # Reinicia a conexão de rede principal e bridge
+    check_superuser # Chama a função para verificar se é superusuário
+    remove_bridge
+    restart_connection
+    create_bridge
+	test_connection
     done
 }
 
