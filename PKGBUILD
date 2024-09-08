@@ -15,7 +15,7 @@ source=("${pkgname}"
 	# "${pkgname}.service"
 	"${pkgname}.conf.pacnew")
 # source=("git+${url}.git")
-sha256sums=("9d33203fe7920f9a97225bdb65e26e76476048fc3b596d2727cf02b5b56fd21f"
+sha256sums=("63e8dabd4ca7fd583ce931ea9d93ab783e2dbba8f52d47e186d48d283bbf630c"
 	# "76b652d916d91243990d6e571b389ae73438637ecf42a66ef481833613d88716"
 	"63e8dabd4ca7fd583ce931ea9d93ab783e2dbba8f52d47e186d48d283bbf630c")
 
