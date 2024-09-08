@@ -104,7 +104,7 @@ show_help() {
 			-c|create|--create [<IP>] [<INTERFACE>]   # Cria interface bridge '$bridge_name' e atribui IP e usa a interface de rede especificado
 			-r|restart|--restart                      # Reinicia a conexão de rede principal  e recria interface bridge '$bridge_name'
 			-s|stop|--stop                            # Remove interface bridge '$bridge_name'
-            -t|test|--test                            # Testa a conexão DNS, caso falhe a rede Bridge é reiniciada
+			-t|test|--test                            # Testa a conexão DNS, caso falhe a rede Bridge é reiniciada
 			-h|--help|help                            # Mostra este Help
 	EOF
 }
@@ -252,13 +252,13 @@ test_connection() {
     while true; do
         if ping "$host_dns" -c 1 -w 3 &>>/dev/null; then
         sleep "$host_time"
-        fi
+    else
     # Reinicia a conexão de rede principal e bridge
     check_superuser # Chama a função para verificar se é superusuário
     remove_bridge
     restart_connection
     create_bridge
-	test_connection
+    fi
     done
 }
 
@@ -294,6 +294,7 @@ create_bridge | create | --create | -c)
     check_superuser # Chama a função para verificar se é superusuário
     restart_connection
     create_bridge
+    test_connection
     ;;
 # Remove a interface bridge
 stop_bridge | stop | --stop | -s)
