@@ -96,16 +96,17 @@ check_superuser() {
 # Função para exibir informações de ajuda
 show_help() {
     cat <<-EOF
+		${red}${APP} v${_VERSION_}${reset}
 		${red}Uso: ${reset}$APP ${cyan}[opções]${reset}
 
 			${cyan}Opções:${reset}
-			-c|create|--create                        ${cyan}# Cria interface bridge ${yellow}'$bridge_name'${reset} e atribui IP automatico${reset}
-			-c|create|--create [<IP>                  # Cria interface bridge '$bridge_name' e atribui IP informado
-			-c|create|--create [<IP>] [<INTERFACE>]   # Cria interface bridge '$bridge_name' e atribui IP e usa a interface de rede especificado
-			-r|restart|--restart                      # Reinicia a conexão de rede principal  e recria interface bridge '$bridge_name'
-			-s|stop|--stop                            # Remove interface bridge '$bridge_name'
-			-t|test|--test                            # Testa a conexão DNS, caso falhe a rede Bridge é reiniciada
-			-h|--help|help                            # Mostra este Help
+			-c|create|--create                        ${cyan}# Cria interface bridge ${yellow}'$bridge_name'${cyan} e atribui IP automatico ${reset}
+			-c|create|--create [<IP>                  ${cyan}# Cria interface bridge ${yellow}'$bridge_name'${cyan} e atribui IP informado ${reset}
+			-c|create|--create [<IP>] [<INTERFACE>]   ${cyan}# Cria interface bridge ${yellow}'$bridge_name'${cyan} e atribui IP e interface de rede informados ${reset}
+			-r|restart|--restart                      ${cyan}# Reinicia a conexão de rede principal e recria interface bridge ${yellow}'$bridge_name' ${reset}
+			-s|stop|--stop                            ${cyan}# Remove interface bridge ${yellow}'$bridge_name' ${reset}
+			-t|test|--test                            ${cyan}# Testa a conexão DNS, caso falhe a rede Bridge é reiniciada ${reset}
+			-h|help|--help                            ${cyan}# Mostra este Help ${reset}
 	EOF
 }
 
