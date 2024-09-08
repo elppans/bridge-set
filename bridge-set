@@ -286,7 +286,7 @@ interfaces="${interfaces:-$3}"
 bridge_mask=${bridge_mask:-""}
 bridge_gw=${bridge_gw:-""}
 host_dns=${host_dns:-cloudflare.com}
-host_time=${host_time:-1}
+host_time=${host_time:-60}
 # Verifica as opções e executa a função apropriada
 case "$bridge_options" in
 # Cria a interface bridge

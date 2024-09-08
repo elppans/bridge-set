@@ -15,9 +15,9 @@ source=("${pkgname}"
 	# "${pkgname}.service"
 	"${pkgname}.conf.pacnew")
 # source=("git+${url}.git")
-sha256sums=("997f55bd45dc6aa87729a73d11019f7e544045c245a494e59e9518819b2c67df"
+sha256sums=("9d33203fe7920f9a97225bdb65e26e76476048fc3b596d2727cf02b5b56fd21f"
 	# "76b652d916d91243990d6e571b389ae73438637ecf42a66ef481833613d88716"
-	"b03f89cfbe349f39eba578da273181d699e779c77ab7a42e9f5bdaa89060bf72")
+	"63e8dabd4ca7fd583ce931ea9d93ab783e2dbba8f52d47e186d48d283bbf630c")
 
 package() {
 	# Configuração do diretório source, se ativado tipo {git}

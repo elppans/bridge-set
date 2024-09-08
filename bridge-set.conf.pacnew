@@ -45,7 +45,7 @@ bridge_gw=""
 # Exemplo: host_dns="google.com"
 host_dns=""
 
-# host_time: Esta variável define o tempo de teste de comunicação, a cada N minutos.
-# Padrão: 1 minuto
-# Exemplo: host_time='5'
+# host_time: Esta variável define o tempo de teste de comunicação, a cada N segundos.
+# Padrão: 60 Segundos
+# Exemplo: host_time='300' # 5 Minutos
 host_time=""
