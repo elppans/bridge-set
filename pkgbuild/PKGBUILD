@@ -9,7 +9,7 @@ license=('CUSTOM')
 depends=('iproute2' 'networkmanager' 'bridge-utils' 'dhclient')
 optdepends=('dhcpcd')
 pkgdesc="Cria uma ponte de rede (bridge) para combinar várias interfaces em uma única conexão."
-url="https://github.com/elppans/${pkgname}"
+url="https://github.com/vcatafesta/${pkgname}"
 source=("git+${url}.git")
 #sha256sums=("ceb19612672b5ddf98a7965f88fb0b0c214c85ba23122135fe9d164590fcad42"
 #	# "76b652d916d91243990d6e571b389ae73438637ecf42a66ef481833613d88716"
@@ -57,33 +57,4 @@ package() {
 	if [ -f "README.md" ]; then
 		install -Dm644 README.md "${pkgdir}/usr/share/doc/${pkgname}/README.md"
 	fi
-}
-
-post_install() {
-	systemctl daemon-reload
-	cat <<-EOF
-		O bridge-set foi instalado com sucesso...
-		Faça o comando "bridge-set" sem parametros para ver o help;
-		Para mais informações, acesse o README no github.
-	EOF
-
-	# Caminho para o arquivo bridge-set.conf
-	bridgesetconf="/opt/bridge-set/bridge-set.conf"
-	bridgesetconfnew="/opt/bridge-set/bridge-set.conf.pacnew"
-
-	# Verifica se o arquivo existe
-	if [ -f "${bridgesetconf}" ]; then
-		echo "warning: ${bridgesetconf} installed as ${bridgesetconfnew}"
-	else
-		# Renomeia o novo arquivo para o nome original
-		mv "${bridgesetconfnew}" "${bridgesetconf}"
-	fi
-}
-
-post_upgrade() {
-	post_install
-}
-
-post_remove() {
-	echo "O $pkgname foi removido"
 }
