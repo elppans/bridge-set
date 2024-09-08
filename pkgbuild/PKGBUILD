@@ -14,30 +14,58 @@ source=("git+${url}.git")
 #sha256sums=("ceb19612672b5ddf98a7965f88fb0b0c214c85ba23122135fe9d164590fcad42"
 #	# "76b652d916d91243990d6e571b389ae73438637ecf42a66ef481833613d88716"
 #	"63e8dabd4ca7fd583ce931ea9d93ab783e2dbba8f52d47e186d48d283bbf630c")
-sha256sums=(SKIP)
+sha256sums=('SKIP')
+md5sums=('SKIP')
+
+# Automatically detect and use the correct install file
+if [ -e "${pkgname}.install" ]; then
+	install=${pkgname}.install
+elif [ -e "pkgbuild.install" ]; then
+	install=pkgbuild.install
+fi
+
+prepare() {
+	cd "${srcdir}/${pkgname}"
+	# Add any preparation steps here, if needed
+	# For example: patch -p1 < "${srcdir}/patch-file.patch"
+}
 
 package() {
-	# Criação dos diretórios necessários
-	#cd "${srcdir}"
-	mkdir -p "${pkgdir}/usr/bin"
-	mkdir -p "${pkgdir}/opt/${pkgname}"
-	mkdir -p "${pkgdir}/etc/systemd/system"
+	cd "${srcdir}/${pkgname}"
 
-	# Instalação dos arquivos em seus respectivos diretórios
-	#install -m0755 $srcdir/${pkgname} "${pkgdir}/opt/${pkgname}/${pkgname}"
-	#ln -sf "$pkgdir/opt/$pkgname/$pkgname" "$pkgdir/usr/bin/$pkgname"
-	install -m0755 "$srcdir/${pkgname}/${pkgname}"							  "${pkgdir}/usr/bin/${pkgname}"
-	install -m0644 "$srcdir/${pkgname}/${pkgname}.conf.pacnew"	  "${pkgdir}/opt/${pkgname}/${pkgname}.conf.pacnew"
-	install -m0644 "$srcdir/${pkgname}/${pkgname}.service.pacnew" "${pkgdir}/etc/systemd/system/${pkgname}.service"
+	# Determine the correct source directory
+	if [ -d "${pkgname}" ]; then
+		srcdir="${srcdir}/${pkgname}/${pkgname}"
+	else
+		srcdir="${srcdir}/${pkgname}"
+	fi
+
+	# Install files
+	local dirs=("usr" "etc" "opt")
+	for dir in "${dirs[@]}"; do
+		if [ -d "${srcdir}/${dir}" ]; then
+			cp -a "${srcdir}/${dir}" "${pkgdir}/"
+		fi
+	done
+
+	# Install license file if present
+	if [ -f "LICENSE" ]; then
+		install -Dm644 LICENSE "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE"
+	fi
+
+	# Install documentation if present
+	if [ -f "README.md" ]; then
+		install -Dm644 README.md "${pkgdir}/usr/share/doc/${pkgname}/README.md"
+	fi
 }
 
 post_install() {
 	systemctl daemon-reload
 	cat <<-EOF
-O bridge-set foi instalado com sucesso...
-Faça o comando "bridge-set" sem parametros para ver o help;
-Para mais informações, acesse o README no github.
-EOF
+		O bridge-set foi instalado com sucesso...
+		Faça o comando "bridge-set" sem parametros para ver o help;
+		Para mais informações, acesse o README no github.
+	EOF
 
 	# Caminho para o arquivo bridge-set.conf
 	bridgesetconf="/opt/bridge-set/bridge-set.conf"
