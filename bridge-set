@@ -9,7 +9,7 @@ shopt -s extglob
 
 #system
 readonly APP="${0##*/}"
-readonly _VERSION_='0.0.1-20240811'
+readonly _VERSION_='1.0.9-20240908'
 # shellcheck disable=SC2155
 readonly distro="$(uname -n)"
 readonly DEPENDENCIES=(ip nmcli tput gettext dhclient dhcpcd)
@@ -104,6 +104,7 @@ show_help() {
 			-c|create|--create [<IP>] [<INTERFACE>]   # Cria interface bridge '$bridge_name' e atribui IP e usa a interface de rede especificado
 			-r|restart|--restart                      # Reinicia a conexão de rede principal  e recria interface bridge '$bridge_name'
 			-s|stop|--stop                            # Remove interface bridge '$bridge_name'
+            -t|test|--test                            # Testa a conexão DNS, caso falhe a rede Bridge é reiniciada
 			-h|--help|help                            # Mostra este Help
 	EOF
 }
@@ -247,6 +248,15 @@ restart_connection() {
     nmcli connection up "${connection}"
 }
 
+test_connection() {
+    while true; do
+        if ! ping "$host_dns" -c 1 -w 3; then
+            restart_connection
+        fi
+        sleep "$host_time"
+    done
+}
+
 setVarColors
 checkDependencies
 
@@ -270,7 +280,8 @@ bridge_ip="${bridge_ip:-$2}"
 interfaces="${interfaces:-$3}"
 bridge_mask=${bridge_mask:-""}
 bridge_gw=${bridge_gw:-""}
-
+host_dns=${host_dns:-cloudflare.com}
+host_time=${host_time:-1}
 # Verifica as opções e executa a função apropriada
 case "$bridge_options" in
 # Cria a interface bridge
@@ -289,12 +300,16 @@ stop_bridge | stop | --stop | -s)
 restart_connection | restart | --restart | -r)
     # restart_connection
     # ;;
-# Reinicia a conexão de rede principal e bridge
-# restart_bridge_all | restart-all | --restart-all | -ra)
+    # Reinicia a conexão de rede principal e bridge
+    # restart_bridge_all | restart-all | --restart-all | -ra)
     check_superuser # Chama a função para verificar se é superusuário
     remove_bridge
     restart_connection
     create_bridge
+    ;;
+# Testa a conexão DNS, caso falhe a rede Bridge é reiniciada
+test_connection | test | --test | -t)
+    test_connection
     ;;
 *)
     show_help

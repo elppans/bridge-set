@@ -37,3 +37,15 @@ bridge_mask=""
 # Exemplo: bridge_gw="192.168.1.1"
 # Observação: Se foi configurado "bridge_ip", deve configurar o Gateway em "bridge_gw".
 bridge_gw=""
+
+# host_dns: Esta variável define a configuração de um site específico para usar como teste de comunicação.
+# Será feito um teste de comunicação com um site definido e caso não comunique, será reiniciado a rede Bridge.
+# Uso: defina um site onde será testado a comunicação DNS a cada "N" minutos
+# Padrão: cloudflare.com
+# Exemplo: host_dns="google.com"
+host_dns=""
+
+# host_time: Esta variável define o tempo de teste de comunicação, a cada N minutos.
+# Padrão: 1 minuto
+# Exemplo: host_time='5'
+host_time=""
