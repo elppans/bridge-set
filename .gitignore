@@ -1,5 +1,5 @@
 # Ignorar tudo
-*
+#*
 # Não ignorar arquivos específicos
 !/bridge-set.conf.pacnew
 !/bridge-set.install
