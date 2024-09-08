@@ -2,7 +2,7 @@ post_install() {
   systemctl daemon-reload
   cat <<-EOF
 
-    O pacote bridge-set foi instalado com sucesso
+    => O pacote bridge-set foi instalado com sucesso
     Faça o comando 'bridge-set' sem parametros para ver o help
     Para mais informações, acesse o README no github
 
@@ -26,7 +26,7 @@ post_upgrade() {
 }
 
 post_remove() {
-
-  echo "O pacote 'bridge-set' foi removido com sucesso"
-
+	echo
+  echo "=> O pacote 'bridge-set' foi removido com sucesso"
+  echo
 }
