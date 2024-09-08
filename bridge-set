@@ -250,15 +250,15 @@ restart_connection() {
 
 test_connection() {
     while true; do
-        if ping "$host_dns" -c 1 -w 3 &>>/dev/null; then
-        sleep "$host_time"
-    else
-    # Reinicia a conexão de rede principal e bridge
-    check_superuser # Chama a função para verificar se é superusuário
-    remove_bridge
-    restart_connection
-    create_bridge
-    fi
+        if ping "$host_dns" -c 1 &>>/dev/null; then
+            sleep "$host_time"
+        else
+            # Reinicia a conexão de rede principal e bridge
+            check_superuser # Chama a função para verificar se é superusuário
+            remove_bridge
+            restart_connection
+            create_bridge
+        fi
     done
 }
 
@@ -287,6 +287,7 @@ bridge_mask=${bridge_mask:-""}
 bridge_gw=${bridge_gw:-""}
 host_dns=${host_dns:-cloudflare.com}
 host_time=${host_time:-60}
+
 # Verifica as opções e executa a função apropriada
 case "$bridge_options" in
 # Cria a interface bridge
