@@ -295,7 +295,7 @@ create_bridge | create | --create | -c)
     check_superuser # Chama a função para verificar se é superusuário
     restart_connection
     create_bridge
-    test_connection
+    test_connection &
     ;;
 # Remove a interface bridge
 stop_bridge | stop | --stop | -s)
