@@ -1,4 +1,5 @@
 # Maintainer: Marcelo K. <marcelo.pdvtec@gmail.com>
+# Contribuitor: Vilmar Catafesta <vcatafesta@gmail.com>
 # shellcheck disable=all
 
 pkgname=bridge-set
