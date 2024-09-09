@@ -8,9 +8,9 @@ After=NetworkManager.service
 [Service]
 Type=forking
 ExecStartPre=/bin/sleep 5
-ExecStart=/usr/bin/${pkgname} -c
-ExecReload=/usr/bin/${pkgname} -r
-ExecStop=/usr/bin/${pkgname} -s
+ExecStart=/usr/bin/bridge-set -c
+ExecReload=/usr/bin/bridge-set -r
+ExecStop=/usr/bin/bridge-set -s
 Restart=always
 RestartSec=3s
 
