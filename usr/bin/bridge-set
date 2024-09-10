@@ -87,10 +87,10 @@ checkDependencies() {
 	fi
 }
 
-# Função para verificar se é Super Usuário
+# Função para verificar se é root
 check_superuser() {
 	if [ "$(id -u)" != "0" ]; then
-		die "$(gettext "Este parâmetro deve ser executado como superusuário") ${yellow}root"
+		die "$(gettext "Este parâmetro deve ser executado como root") ${yellow}root"
 	fi
 }
 
@@ -121,7 +121,7 @@ dhcpcd_ip_bridge() {
 		/usr/bin/dhcpcd "$bridge_name"
 	else
 		# Se dhclient ou dhcpcd não existirem, dá mensagem de erro e sai
-		echo "Erro: Este script requer 'dhcpcd' ou 'dhclient' (Recomendável).."
+		echo "Erro: Este script requer 'dhcpcd' ou 'dhclient' (recomendável)"
 		echo "Por favor, instale as dependências antes de executar o script."
 		exit 1
 	fi
