@@ -117,12 +117,10 @@ sudo sh -c "iptables-save > /etc/iptables/rules.v4"
 sudo iptables -t nat -L -n -v
 sudo brctl show
 
-
-
-# Habilitar o Encaminhamento de IP:
-sudo sysctl -w net.ipv4.ip_forward=0
+# DeHabilitar o Encaminhamento de IP:
+#sudo sysctl -w net.ipv4.ip_forward=0
 # Ativar o Proxy ARP nas Interfaces:
-sudo sysctl -w net.ipv4.conf.enp5s0.proxy_arp=0
-sudo sysctl -w net.ipv4.conf.wlp0s20u2u3.proxy_arp=0
+#sudo sysctl -w net.ipv4.conf.enp5s0.proxy_arp=0
+#sudo sysctl -w net.ipv4.conf.wlp0s20u2u3.proxy_arp=0
 
 
