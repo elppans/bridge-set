@@ -2,8 +2,8 @@
 # shellcheck disable=all
 
 pkgname=bridge-set
-pkgver=1.0.9
-pkgrel=5
+pkgver=1.0.10
+pkgrel=1
 arch=('any')
 license=('CUSTOM')
 install='bridge-set.install'
@@ -15,7 +15,7 @@ source=("${pkgname}"
 	# "${pkgname}.service"
 	"${pkgname}.conf.pacnew")
 # source=("git+${url}.git")
-sha256sums=("ceb19612672b5ddf98a7965f88fb0b0c214c85ba23122135fe9d164590fcad42"
+sha256sums=("8e87b0e8ebb0760ae80dd8cbb1f9d3e88b3bb1fdc56bdc241de1e869af86f5c7"
 	# "76b652d916d91243990d6e571b389ae73438637ecf42a66ef481833613d88716"
 	"63e8dabd4ca7fd583ce931ea9d93ab783e2dbba8f52d47e186d48d283bbf630c")
 

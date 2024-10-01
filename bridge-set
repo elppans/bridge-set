@@ -262,6 +262,17 @@ test_connection() {
     done
 }
 
+# Função para desativar o wakeup da interface de rede
+disable_wakeup() {
+    file_path="/sys/class/net/$main_interface/device/power/wakeup"
+    local file_path
+    # Verifica se o arquivo existe
+    if [ -f "$file_path" ]; then
+        # Se o arquivo existir, execute o comando
+        echo "disabled" | tee "$file_path"
+    fi
+}
+
 setVarColors
 checkDependencies
 
@@ -295,6 +306,7 @@ create_bridge | create | --create | -c)
     check_superuser # Chama a função para verificar se é superusuário
     restart_connection
     create_bridge
+    disable_wakeup
     test_connection &
     ;;
 # Remove a interface bridge
