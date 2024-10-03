@@ -1,0 +1,19 @@
+[Unit]
+# Configuração da Interface Bridge
+Description=Configuração da Interface Bridge
+After=network.target
+After=NetworkManager.service
+
+# Comando para criar a bridge
+[Service]
+Type=forking
+ExecStartPre=/bin/sleep 5
+ExecStart=/usr/bin/bridge-set -c
+ExecReload=/usr/bin/bridge-set -r
+ExecStop=/usr/bin/bridge-set -s
+Restart=always
+RestartSec=3s
+
+# serviço será executado durante a inicialização padrão do sistema
+[Install]
+WantedBy=default.target
