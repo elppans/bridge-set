@@ -3,8 +3,8 @@
 # shellcheck disable=all
 
 pkgname=bridge-set
-pkgver=1.0.9
-pkgrel=5
+pkgver=1.0.11
+pkgrel=1
 arch=('any')
 license=('CUSTOM')
 depends=('iproute2' 'networkmanager' 'bridge-utils' 'dhclient')
