@@ -129,27 +129,53 @@ dhcpcd_ip_bridge() {
 
 # Função para selecionar a interface de rede
 set_interfaces() {
-	# Verifica se o usuário especificou a Interface manualmente ou se o arquivo contém um Interface
-	if [ -n "$interfaces" ]; then
-		main_interface="$interfaces"
-		export main_interface
-	else
-		# Detecta automaticamente as interfaces de rede físicas (ethernet)
-		interfaces=${interfaces:-"$(ip link show up | awk -F ': ' '/^[0-9]+:/ {print $2}' | grep -v '^lo$\|^vmnet\|^vnet\|^virbr\|^br')"}
+    # Verifica se o usuário especificou a Interface manualmente ou se o arquivo contém uma Interface
+    if [ -n "$interfaces" ]; then
+        main_interface="$interfaces"
+        export main_interface
+    else
+        # Detecta automaticamente as interfaces de rede físicas (ethernet)
+        interfaces=${interfaces:-"$(ip link show up | awk -F ': ' '/^[0-9]+:/ {print $2}' | grep -v '^lo$\|^vmnet\|^vnet\|^virbr\|^br')"}
 		export interfaces
-		# Seleciona a primeira interface detectada como a principal
-		main_interface=$(echo "$interfaces" | head -n 1)
-		export main_interface
-		# Seleciona a rota da Interface detectada
-		main_route="$(ip route show dev "$main_interface" | awk '/default/ {print $3}')"
-		export main_route
-		bridge_gw=${bridge_gw:-"$main_route"}
-		export bridge_gw
-		# Seleciona o IP da Interface detectada
-		main_ip=$(ip addr show dev "$main_interface" | awk '/inet / {print $2}')
-		export main_ip
-	fi
+
+        # Verifica se não existem interfaces físicas de rede detectadas
+        if [ -z "$interfaces" ]; then
+            echo "Nenhuma interface Ethernet detectada."
+        fi
+
+        # Verifica se há uma interface Wi-Fi ativa
+        wifi_interface=$(iw dev | grep -oP '(?<=Interface\s)\w+')
+
+        if [ -n "$wifi_interface" ]; then
+            echo "Interface Wi-Fi detectada: $wifi_interface"
+
+            # Executa o script secundário para configurar o Wi-Fi
+			# shellcheck source=/dev/null
+            source /usr/bin/bridge-wset  # Certifique-se de que o caminho está correto
+            #set_winterfaces
+            wbridge_main
+
+            # Após executar o script secundário, sair da função
+            return 0
+        fi
+
+        # Se não há interfaces Wi-Fi, continuar com a detecção Ethernet
+        # Detecta automaticamente as interfaces de rede físicas (ethernet)
+        main_interface=$(echo "$interfaces" | head -n 1)
+        export main_interface
+
+        # Seleciona a rota da Interface detectada
+        main_route="$(ip route show dev "$main_interface" | awk '/default/ {print $3}')"
+        export main_route
+        bridge_gw=${bridge_gw:-"$main_route"}
+        export bridge_gw
+
+        # Seleciona o IP da Interface detectada
+        main_ip=$(ip addr show dev "$main_interface" | awk '/inet / {print $2}')
+        export main_ip
+    fi
 }
+
 
 # Função para configurar um IP livre ou especifico para a interface Bridge
 set_bridge() {

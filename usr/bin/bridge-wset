@@ -1,0 +1,176 @@
+#!/bin/bash
+
+# Verifica se o script está sendo executado como root
+check_root() {
+    if [ "$EUID" -ne 0 ]; then
+        echo "Por favor, execute como root (use sudo)."
+        exit 1
+    fi
+}
+
+# Função para configurar as interfaces
+set_winterfaces() {
+    # Verifica se o usuário especificou a Interface manualmente ou se o arquivo contém uma Interface
+    if [ -n "$interfaces" ]; then
+        main_interface="$interfaces"
+    else
+        # Detecta automaticamente as interfaces de rede Wi-Fi
+        interfaces=$(iw dev | grep -oP '(?<=Interface\s)\w+')
+
+        # Se não houver interfaces Wi-Fi detectadas, sai da função
+        if [ -z "$interfaces" ]; then
+            echo "Nenhuma interface Wi-Fi detectada."
+            return 0
+        fi
+
+        # Seleciona a primeira interface Wi-Fi detectada como a principal
+        main_interface=$(echo "$interfaces" | head -n 1)
+
+        # Verifica se a interface Wi-Fi está ativa
+        if ! ip link show "$main_interface" | grep -q "state UP"; then
+            echo "A interface Wi-Fi $main_interface não está ativa."
+            return 0
+        fi
+    fi
+    export main_interface
+}
+
+# Função para detectar um IP livre no range da rede Wi-Fi
+find_free_ip() {
+    local base_ip=$1
+    local subnet=$2
+
+    # Pingar IPs do range para verificar se estão disponíveis (ignora os IPs de .1 a .9)
+    for i in {10..254}; do
+        ping -c 1 -W 1 "${base_ip}.${i}" > /dev/null 2>&1
+        # shellcheck disable=SC2181
+        if [ $? -ne 0 ]; then
+            echo "${base_ip}.${i}"
+            return 0
+        fi
+    done
+
+    echo "Não foi encontrado um IP livre na rede $subnet"
+    exit 1
+}
+
+# Função para configurar a bridge
+configure_bridge() {
+    # Detecta o IP da interface Wi-Fi e a sub-rede
+    wifi_ip=$(ip -4 addr show "$interfaces" | grep -oP '(?<=inet\s)\d+(\.\d+){3}')
+    subnet=$(ip -4 addr show "$interfaces" | grep -oP '(?<=inet\s)\d+(\.\d+){3}/\d+')
+
+    # Se não for possível obter o IP, saímos do script
+    if [ -z "$wifi_ip" ]; then
+        echo "Não foi possível detectar o IP da interface Wi-Fi ($interfaces). Verifique se a interface está conectada."
+        exit 1
+    fi
+
+    # Extrai a base do IP da rede (os três primeiros octetos)
+    base_ip=$(echo "$wifi_ip" | cut -d'.' -f1-3)
+
+    # Desassocia a interface Wi-Fi de qualquer bridge existente
+    ip link set "$interfaces" nomaster
+
+    # Cria a interface de bridge (br0)
+    ip link add name "$bridge_name" type bridge
+
+    # Configura o IP da interface bridge (br0), com base no valor de bdhclient
+    if [ "$bdhclient" -eq 0 ]; then
+        if [ -n "$bridge_ip" ]; then
+            free_ip="$bridge_ip"
+        else
+            free_ip=$(find_free_ip "$base_ip" "$subnet")
+        fi
+        echo "Configurando o IP $free_ip na interface $bridge_name..."
+        ip address add dev "$bridge_name" "${free_ip}/24"
+    else
+        # Usa dhclient para obter um IP via DHCP
+        echo "Usando dhclient para obter um IP via DHCP na interface $bridge_name..."
+        dhclient "$bridge_name"
+    fi
+
+    # Ativa a interface bridge
+    ip link set dev "$bridge_name" up
+
+    # Ativa a interface Wi-Fi
+    ip link set "$interfaces" up
+}
+
+# Função para configurar o dnsmasq
+configure_dnsmasq() {
+    dnsmasq_conf="/etc/dnsmasq.conf"
+    br0_config="interface=$bridge_name"
+    ip_range_config="dhcp-range=${base_ip}.10,${base_ip}.200,255.255.255.0,24h"
+
+    # Verifica se a configuração já existe no dnsmasq.conf
+    existing_br0=$(grep -Fx "$br0_config" "$dnsmasq_conf")
+    existing_ip_range=$(grep -Fx "$ip_range_config" "$dnsmasq_conf")
+
+    add_config() {
+        echo "Adicionando nova configuração ao dnsmasq..."
+        echo "$br0_config" >> "$dnsmasq_conf"
+        echo "$ip_range_config" >> "$dnsmasq_conf"
+    }
+
+    if [[ -n "$existing_br0" && -n "$existing_ip_range" ]]; then
+        echo "As configurações já existem no dnsmasq."
+
+        if [[ "$existing_br0" == "$br0_config" && "$existing_ip_range" == "$ip_range_config" ]]; then
+            echo "As configurações são iguais. Reiniciando o serviço dnsmasq..."
+        else
+            echo "As configurações são diferentes. Removendo as antigas e aplicando as novas..."
+            sed -i "/interface=$bridge_name/d" "$dnsmasq_conf"
+            sed -i "/dhcp-range=${base_ip}/d" "$dnsmasq_conf"
+            add_config
+        fi
+    else
+        echo "A configuração não existe. Adicionando ao dnsmasq..."
+        add_config
+    fi
+
+    # Reinicia o serviço dnsmasq
+    systemctl restart dnsmasq
+    echo "dnsmasq reiniciado com sucesso."
+}
+
+# Função para configurar o NAT e o encaminhamento
+configure_nat_forwarding() {
+    sysctl -w net.ipv4.ip_forward=1
+    iptables -t nat -A POSTROUTING -o "$interfaces" -j MASQUERADE
+    echo "Regras do iptables:"
+    iptables -t nat -L -n -v
+}
+
+# Função para exibir a configuração da bridge
+show_bridge_config() {
+    echo "Configuração da bridge:"
+    brctl show
+}
+
+# Função principal que orquestra a configuração da bridge e NAT
+wbridge_main() {
+    check_root
+    echo "Configurando bridge com Wi-Fi e NAT..."
+    set_winterfaces
+    configure_bridge
+    configure_dnsmasq
+    configure_nat_forwarding
+    show_bridge_config
+    echo "Configuração de rede concluída."
+}
+
+# Arquivo environment para configuração de IP FIXO para a Interface Bridge
+if [[ -f "/opt/bridge-set/bridge-set.conf" ]]; then
+	# shellcheck source=/dev/null
+	source /opt/bridge-set/bridge-set.conf
+fi
+
+# Variáveis globais
+interfaces="${interfaces:-$3}"
+bridge_name="${bridge_name:-br0}"
+bridge_ip="${bridge_ip:-$2}"
+bdhclient=${bdhclient:-0} # Ajuste para 0 se quiser usar find_free_ip, 1 para usar dhclient
+
+# Executa o script principal
+wbridge_main
