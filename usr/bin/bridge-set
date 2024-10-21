@@ -156,7 +156,8 @@ set_interfaces() {
             wbridge_main
 
             # Após executar o script secundário, sair da função
-            return 0
+            # return 0
+            exit 0
         fi
 
         # Se não há interfaces Wi-Fi, continuar com a detecção Ethernet
