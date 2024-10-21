@@ -1,11 +1,113 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-# Verifica se o script está sendo executado como root
-check_root() {
-    if [ "$EUID" -ne 0 ]; then
-        echo "Por favor, execute como root (use sudo)."
-        exit 1
-    fi
+#debug
+export PS4='${red}${0##*/}${green}[$FUNCNAME]${pink}[$LINENO]${reset} '
+#set -x
+#set -e
+shopt -s extglob
+
+#system
+readonly APP="${0##*/}"
+readonly _VERSION_='1.0.9-5'
+readonly DEPENDENCIES=(ip nmcli tput gettext dhclient dhcpcd)
+
+setVarColors() {
+	# does the terminal support true-color?
+	if [[ -n "$(command -v "tput")" ]]; then
+		#tput setaf 127 | cat -v  			#capturar saida
+		: "${reset=$(tput sgr0)}"
+		: "${bold=$(tput bold)}"
+		: "${underline=$(tput smul)}"   # Início do sublinhado
+		: "${nounderline=$(tput rmul)}" # Fim do sublinhado
+		: "${reverse=$(tput rev)}"      # Inverte as cores de fundo e texto
+
+		# Definir as cores ANSI como variáveis
+		: "${black=$(tput bold)$(tput setaf 0)}"
+		: "${red=$(tput bold)$(tput setaf 196)}"
+		: "${green=$(tput bold)$(tput setaf 2)}"
+		: "${yellow=$(tput bold)$(tput setaf 3)}"
+		: "${blue=$(tput setaf 4)}"
+		: "${pink=$(tput setaf 5)}"
+		: "${magenta=$(tput setaf 5)}"
+		: "${cyan=$(tput setaf 6)}"
+		: "${white=$(tput setaf 7)}"
+		: "${gray=$(tput setaf 8)}"
+		: "${orange=$(tput setaf 202)}"
+		: "${purple=$(tput setaf 125)}"
+		: "${violet=$(tput setaf 61)}"
+		: "${light_red=$(tput setaf 9)}"
+		: "${light_green=$(tput setaf 10)}"
+		: "${light_yellow=$(tput setaf 11)}"
+		: "${light_blue=$(tput setaf 12)}"
+		: "${light_magenta=$(tput setaf 13)}"
+		: "${light_cyan=$(tput setaf 14)}"
+		: "${bright_white=$(tput setaf 15)}"
+	else
+		unsetVarColors
+	fi
+}
+
+unsetVarColors() {
+	unset reset
+	unset bold underline nounderline reverse
+	unset black red green yellow blue pink magenta cyan white gray orange purple violeta
+	unset light_red light_green light_yellow light_blue light_magenta light_cyan bright_white
+}
+
+DOT() {
+	printf "%s" "${blue}:: ${reset}"
+}
+
+die() {
+	local msg="$1"
+	shift
+	printf "%-75s\n" "$(DOT)${bold}${red}$msg${reset}" >&2
+	exit 1
+}
+
+checkDependencies() {
+	local d
+	local errorFound=false
+	declare -a missing
+
+	for d in "${DEPENDENCIES[@]}"; do
+		if [[ -z $(command -v "$d") ]]; then
+			errorFound=true
+			missing+=("$d")
+			printf '%s\n' "${red}ERRO${reset}: não encontrei o comando ${cyan}'$d'${reset}"
+		fi
+	done
+	if $errorFound; then
+		echo "${yellow}--------------IMPOSSÍVEL CONTINUAR-------------${reset}"
+		echo "Esse script precisa dos comandos listados acima"
+		echo "Instale-os e/ou verifique se estão no seu \$PATH"
+		echo "${yellow}-----------------------------------------------${reset}"
+		die "Execução abortada"
+	fi
+}
+
+# Função para verificar se é root
+check_superuser() {
+	if [ "$(id -u)" != "0" ]; then
+		die "$(gettext "Este parâmetro deve ser executado como root") ${yellow}root"
+	fi
+}
+
+# Função para exibir informações de ajuda
+show_help() {
+	cat <<-EOF
+		${red}${APP} v${_VERSION_}${reset}
+		${red}Uso: ${reset}$APP ${cyan}[opções]${reset}
+
+			${cyan}Opções:${reset}
+			-c|create|--create                        ${cyan}# Cria interface bridge ${yellow}'$bridge_name'${cyan} e atribui IP automatico ${reset}
+			-c|create|--create [<IP>                  ${cyan}# Cria interface bridge ${yellow}'$bridge_name'${cyan} e atribui IP informado ${reset}
+			-c|create|--create [<IP>] [<INTERFACE>]   ${cyan}# Cria interface bridge ${yellow}'$bridge_name'${cyan} e atribui IP e interface de rede informados ${reset}
+			-r|restart|--restart                      ${cyan}# Reinicia a conexão de rede principal e recria interface bridge ${yellow}'$bridge_name' ${reset}
+			-s|stop|--stop                            ${cyan}# Remove interface bridge ${yellow}'$bridge_name' ${reset}
+			-t|test|--test                            ${cyan}# Testa a conexão DNS, caso falhe a rede Bridge é reiniciada ${reset}
+			-h|help|--help                            ${cyan}# Mostra este Help ${reset}
+	EOF
 }
 
 # Função para configurar as interfaces
@@ -78,9 +180,19 @@ configure_bridge() {
     # Configura o IP da interface bridge (br0), com base no valor de bdhclient
     if [ "$bdhclient" -eq 0 ]; then
         if [ -n "$bridge_ip" ]; then
-            free_ip="$bridge_ip"
+# Verifica se a máscara está presente
+if [[ $bridge_ip =~ "/" ]]; then
+  # Remove a máscara
+  free_ip="${bridge_ip%%/*}"
+  echo "Atribuir o IP $free_ip"
+else
+  # A máscara não está presente, atribui o valor original
+  free_ip="$bridge_ip"
+  echo "Atribuir o IP $free_ip"
+fi
         else
             free_ip=$(find_free_ip "$base_ip" "$subnet")
+            echo "Atribuir o IP $free_ip"
         fi
         echo "Configurando o IP $free_ip na interface $bridge_name..."
         ip address add dev "$bridge_name" "${free_ip}/24"
@@ -136,6 +248,7 @@ configure_dnsmasq() {
 
 # Função para configurar o NAT e o encaminhamento
 configure_nat_forwarding() {
+    echo "forwarding: $interfaces"
     sysctl -w net.ipv4.ip_forward=1
     iptables -t nat -A POSTROUTING -o "$interfaces" -j MASQUERADE
     echo "Regras do iptables:"
@@ -150,7 +263,7 @@ show_bridge_config() {
 
 # Função principal que orquestra a configuração da bridge e NAT
 wbridge_main() {
-    check_root
+    check_superuser
     echo "Configurando bridge com Wi-Fi e NAT..."
     set_winterfaces
     configure_bridge
@@ -160,6 +273,29 @@ wbridge_main() {
     echo "Configuração de rede concluída."
 }
 
+# Função para remover a interface Bridge
+remove_bridge() {
+	sudo ip link set "$bridge_name" down
+	# sudo brctl delif "$bridge_name" "$main_interface"
+	sudo brctl delbr "$bridge_name"
+	# Exibe informações da interface de rede
+	ip addr show "$main_interface"
+	# Exibe as informações da rota
+	ip route
+}
+
+# Função para reiniciar a interface de rede
+restart_connection() {
+	# Chama a função para setar a interface
+	local connection
+	connection="$(nmcli -t -f GENERAL.CONNECTION device show "$main_interface" | cut -f "2" -d ":")"
+	nmcli connection down "${connection}"
+	nmcli connection up "${connection}"
+}
+
+setVarColors
+checkDependencies
+
 # Arquivo environment para configuração de IP FIXO para a Interface Bridge
 if [[ -f "/opt/bridge-set/bridge-set.conf" ]]; then
 	# shellcheck source=/dev/null
@@ -167,10 +303,46 @@ if [[ -f "/opt/bridge-set/bridge-set.conf" ]]; then
 fi
 
 # Variáveis globais
+bridge_options="$1"
 interfaces="${interfaces:-$3}"
 bridge_name="${bridge_name:-br0}"
 bridge_ip="${bridge_ip:-$2}"
 bdhclient=${bdhclient:-0} # Ajuste para 0 se quiser usar find_free_ip, 1 para usar dhclient
 
 # Executa o script principal
-wbridge_main
+# wbridge_main
+
+# Verifica as opções e executa a função apropriada
+case "$bridge_options" in
+# Cria a interface bridge
+create_bridge | create | --create | -c)
+	# check_superuser # Chama a função para verificar se é superusuário
+    wbridge_main
+	# test_connection &
+	;;
+# Remove a interface bridge
+stop_bridge | stop | --stop | -s)
+	check_superuser # Chama a função para verificar se é superusuário
+	remove_bridge
+	restart_connection
+	;;
+# Reinicia a conexão de rede principal
+restart_connection | restart | --restart | -r)
+	# restart_connection
+	# ;;
+	# Reinicia a conexão de rede principal e bridge
+	# restart_bridge_all | restart-all | --restart-all | -ra)
+	check_superuser # Chama a função para verificar se é superusuário
+	remove_bridge
+	restart_connection
+	#create_bridge
+	wbridge_main
+	;;
+# Testa a conexão DNS, caso falhe a rede Bridge é reiniciada
+test_connection | test | --test | -t)
+	test_connection
+	;;
+*)
+	show_help
+	;;
+esac
