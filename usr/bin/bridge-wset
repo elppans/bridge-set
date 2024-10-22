@@ -8,7 +8,7 @@ shopt -s extglob
 
 #system
 readonly APP="${0##*/}"
-readonly _VERSION_='1.0.9-5'
+readonly _VERSION_='1.0.11-1'
 readonly DEPENDENCIES=(ip nmcli tput gettext dhclient dhcpcd)
 
 setVarColors() {
@@ -114,7 +114,7 @@ show_help() {
 set_winterfaces() {
     # Verifica se o usuário especificou a Interface manualmente ou se o arquivo contém uma Interface
     if [ -n "$interfaces" ]; then
-        main_interface="$interfaces"
+        main_winterface="$interfaces"
     else
         # Detecta automaticamente as interfaces de rede Wi-Fi
         interfaces=$(iw dev | grep -oP '(?<=Interface\s)\w+')
@@ -126,15 +126,78 @@ set_winterfaces() {
         fi
 
         # Seleciona a primeira interface Wi-Fi detectada como a principal
-        main_interface=$(echo "$interfaces" | head -n 1)
+        main_winterface=$(echo "$interfaces" | head -n 1)
 
         # Verifica se a interface Wi-Fi está ativa
-        if ! ip link show "$main_interface" | grep -q "state UP"; then
-            echo "A interface Wi-Fi $main_interface não está ativa."
+        if ! ip link show "$main_winterface" | grep -q "state UP"; then
+            echo "A interface Wi-Fi $main_winterface não está ativa."
             return 0
         fi
     fi
-    export main_interface
+    export main_winterface
+}
+
+# Função para Detectar Interfaces Ethernet
+ethernet_interfaces() {
+    # Detecta todas as interfaces Ethernet que começam com 'e'
+    ethernet_ifaces=$(ip link show | awk -F': ' '/^[0-9]+: / {print $2}' | grep -E '^e[a-zA-Z0-9]+')
+
+    # Verifica se foram detectadas interfaces Ethernet
+    if [ -z "$ethernet_ifaces" ]; then
+        echo "Nenhuma interface Ethernet detectada."
+        return 1
+    else
+        echo "Interfaces Ethernet detectadas:"
+        # Retorna as interfaces detectadas
+        echo "$ethernet_ifaces"
+    fi
+}
+
+# Função para Ativar Proxy ARP
+enable_proxy_arp() {
+    # Verifica se foram passadas interfaces Ethernet
+    if [ -z "$1" ]; then
+        echo "Nenhuma interface Ethernet foi passada para ativar Proxy ARP."
+        return 1
+    fi
+
+    # Ativa o Proxy ARP para cada interface Ethernet passada
+    for eth in $1; do
+        sysctl -w net.ipv4.conf."$eth".proxy_arp=1
+        echo "Proxy ARP ativado na interface $eth."
+    done
+}
+
+# Função para Detectar Interfaces de Rede Virtual
+virtual_interfaces() {
+    # Detecta todas as interfaces de rede virtuais que começam com 'v'
+    virtual_ifaces=$(ip link show | awk -F': ' '/^[0-9]+: / {print $2}' | grep -E '^v[a-zA-Z0-9]+')
+
+    # Verifica se foram detectadas interfaces virtuais
+    if [ -z "$virtual_ifaces" ]; then
+        echo "Nenhuma interface de rede virtual detectada."
+        return 1
+    else
+        echo "Interfaces de rede virtual detectadas:"
+        echo "$virtual_ifaces"
+        # Retorna as interfaces detectadas
+        echo "$virtual_ifaces"
+    fi
+}
+
+# Função para Ativar Proxy ARP para Interfaces Virtuais
+enable_virtual_proxy_arp() {
+    # Verifica se foram passadas interfaces virtuais
+    if [ -z "$1" ]; then
+        echo "Nenhuma interface virtual foi passada para ativar Proxy ARP."
+        return 1
+    fi
+
+    # Ativa o Proxy ARP para cada interface virtual passada
+    for viface in $1; do
+        sysctl -w net.ipv4.conf."$viface".proxy_arp=1
+        echo "Proxy ARP ativado na interface virtual $viface."
+    done
 }
 
 # Função para detectar um IP livre no range da rede Wi-Fi
@@ -159,12 +222,12 @@ find_free_ip() {
 # Função para configurar a bridge
 configure_bridge() {
     # Detecta o IP da interface Wi-Fi e a sub-rede
-    wifi_ip=$(ip -4 addr show "$interfaces" | grep -oP '(?<=inet\s)\d+(\.\d+){3}')
-    subnet=$(ip -4 addr show "$interfaces" | grep -oP '(?<=inet\s)\d+(\.\d+){3}/\d+')
+    wifi_ip=$(ip -4 addr show "$main_winterface" | grep -oP '(?<=inet\s)\d+(\.\d+){3}')
+    subnet=$(ip -4 addr show "$main_winterface" | grep -oP '(?<=inet\s)\d+(\.\d+){3}/\d+')
 
     # Se não for possível obter o IP, saímos do script
     if [ -z "$wifi_ip" ]; then
-        echo "Não foi possível detectar o IP da interface Wi-Fi ($interfaces). Verifique se a interface está conectada."
+        echo "Não foi possível detectar o IP da interface Wi-Fi ($main_winterface). Verifique se a interface está conectada."
         exit 1
     fi
 
@@ -172,10 +235,13 @@ configure_bridge() {
     base_ip=$(echo "$wifi_ip" | cut -d'.' -f1-3)
 
     # Desassocia a interface Wi-Fi de qualquer bridge existente
-    ip link set "$interfaces" nomaster
+    ip link set "$main_winterface" nomaster
 
     # Cria a interface de bridge (br0)
     ip link add name "$bridge_name" type bridge
+
+    # Ativa a interface bridge
+    ip link set dev "$bridge_name" up
 
     # Configura o IP da interface bridge (br0), com base no valor de bdhclient
     if [ "$bdhclient" -eq 0 ]; then
@@ -202,11 +268,8 @@ fi
         dhclient "$bridge_name"
     fi
 
-    # Ativa a interface bridge
-    ip link set dev "$bridge_name" up
-
     # Ativa a interface Wi-Fi
-    ip link set "$interfaces" up
+    ip link set "$main_winterface" up
 }
 
 # Função para configurar o dnsmasq
@@ -243,14 +306,43 @@ configure_dnsmasq() {
 
     # Reinicia o serviço dnsmasq
     systemctl restart dnsmasq
-    echo "dnsmasq reiniciado com sucesso."
+    systemctl is-active --quiet dnsmasq && \
+    echo "dnsmasq reiniciado com sucesso" || \
+    echo "Falha ao reiniciar o dnsmasq"
 }
 
 # Função para configurar o NAT e o encaminhamento
 configure_nat_forwarding() {
-    echo "forwarding: $interfaces"
-    sysctl -w net.ipv4.ip_forward=1
-    iptables -t nat -A POSTROUTING -o "$interfaces" -j MASQUERADE
+# Habilita o encaminhamento de pacotes
+sysctl -w net.ipv4.ip_forward=1
+
+# Ativar o Proxy ARP nas Interfaces
+
+# Chama a função para detectar interfaces Ethernet
+eth_interfaces=$(ethernet_interfaces)
+
+# Se a detecção foi bem-sucedida, ativa o Proxy ARP
+# shellcheck disable=SC2181
+if [ $? -eq 0 ]; then
+    enable_proxy_arp "$eth_interfaces"
+fi
+
+# Chama a função para detectar interfaces virtuais
+virt_interfaces=$(virtual_interfaces)
+
+# Se a detecção foi bem-sucedida, ativa o Proxy ARP
+# shellcheck disable=SC2181
+if [ $? -eq 0 ]; then
+    enable_virtual_proxy_arp "$virt_interfaces"
+fi
+
+sysctl -w net.ipv4.conf."$main_winterface".proxy_arp=1  # Ativa o Proxy ARP na interface Wi-Fi wlp1s0
+sysctl -w net.ipv4.conf."$bridge_name".proxy_arp=1     # Ativa o Proxy ARP na interface Bridge br0
+
+# Verifica se a regra de MASQUERADE já existe
+if ! iptables -t nat -C POSTROUTING -o "$main_winterface" -j MASQUERADE 2>/dev/null; then
+    iptables -t nat -A POSTROUTING -o "$main_winterface" -j MASQUERADE
+fi
     echo "Regras do iptables:"
     iptables -t nat -L -n -v
 }
@@ -276,10 +368,10 @@ wbridge_main() {
 # Função para remover a interface Bridge
 remove_bridge() {
 	sudo ip link set "$bridge_name" down
-	# sudo brctl delif "$bridge_name" "$main_interface"
+	# sudo brctl delif "$bridge_name" "$main_winterface"
 	sudo brctl delbr "$bridge_name"
 	# Exibe informações da interface de rede
-	ip addr show "$main_interface"
+	ip addr show "$main_winterface"
 	# Exibe as informações da rota
 	ip route
 }
@@ -288,7 +380,7 @@ remove_bridge() {
 restart_connection() {
 	# Chama a função para setar a interface
 	local connection
-	connection="$(nmcli -t -f GENERAL.CONNECTION device show "$main_interface" | cut -f "2" -d ":")"
+	connection="$(nmcli -t -f GENERAL.CONNECTION device show "$main_winterface" | cut -f "2" -d ":")"
 	nmcli connection down "${connection}"
 	nmcli connection up "${connection}"
 }
