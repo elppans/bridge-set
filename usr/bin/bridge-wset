@@ -164,6 +164,7 @@ enable_proxy_arp() {
     # Ativa o Proxy ARP para cada interface Ethernet passada
     for eth in $1; do
         sysctl -w net.ipv4.conf."$eth".proxy_arp=1
+        sudo sysctl -a | grep net.ipv4.conf."$eth".proxy_arp
         echo "Proxy ARP ativado na interface $eth."
     done
 }
@@ -265,7 +266,7 @@ fi
     else
         # Usa dhclient para obter um IP via DHCP
         echo "Usando dhclient para obter um IP via DHCP na interface $bridge_name..."
-        dhclient "$bridge_name"
+        dhclient -r "$bridge_name"
     fi
 
     # Ativa a interface Wi-Fi
@@ -339,6 +340,10 @@ fi
 sysctl -w net.ipv4.conf."$main_winterface".proxy_arp=1  # Ativa o Proxy ARP na interface Wi-Fi wlp1s0
 sysctl -w net.ipv4.conf."$bridge_name".proxy_arp=1     # Ativa o Proxy ARP na interface Bridge br0
 
+sudo sysctl -a | grep net.ipv4.ip_forward
+sudo sysctl -a | grep net.ipv4.conf."$main_winterface".proxy_arp
+sudo sysctl -a | grep net.ipv4.conf."$bridge_name".proxy_arp
+
 # Verifica se a regra de MASQUERADE já existe
 if ! iptables -t nat -C POSTROUTING -o "$main_winterface" -j MASQUERADE 2>/dev/null; then
     iptables -t nat -A POSTROUTING -o "$main_winterface" -j MASQUERADE
@@ -373,7 +378,7 @@ remove_bridge() {
 	# Exibe informações da interface de rede
 	ip addr show "$main_winterface"
 	# Exibe as informações da rota
-	ip route
+	# ip route
 }
 
 # Função para reiniciar a interface de rede
@@ -415,8 +420,9 @@ create_bridge | create | --create | -c)
 # Remove a interface bridge
 stop_bridge | stop | --stop | -s)
 	check_superuser # Chama a função para verificar se é superusuário
+    set_winterfaces &>>/dev/null
 	remove_bridge
-	restart_connection
+	# restart_connection
 	;;
 # Reinicia a conexão de rede principal
 restart_connection | restart | --restart | -r)
@@ -425,6 +431,7 @@ restart_connection | restart | --restart | -r)
 	# Reinicia a conexão de rede principal e bridge
 	# restart_bridge_all | restart-all | --restart-all | -ra)
 	check_superuser # Chama a função para verificar se é superusuário
+    set_winterfaces &>>/dev/null
 	remove_bridge
 	restart_connection
 	#create_bridge
