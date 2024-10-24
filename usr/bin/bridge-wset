@@ -308,7 +308,9 @@ configure_dnsmasq() {
     fi
 
     # Reinicia o serviço dnsmasq
-    systemctl restart dnsmasq
+    systemctl stop dnsmasq
+    killall dnsmasq
+    systemctl start dnsmasq
     systemctl is-active --quiet dnsmasq && \
     echo "dnsmasq reiniciado com sucesso" || \
     echo "Falha ao reiniciar o dnsmasq"
