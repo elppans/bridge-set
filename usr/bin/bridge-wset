@@ -140,6 +140,7 @@ set_winterfaces() {
 # Função para Detectar Interfaces Ethernet
 ethernet_interfaces() {
     # Detecta todas as interfaces Ethernet que começam com 'e'
+    local ethernet_ifaces
     ethernet_ifaces=$(ip link show | awk -F': ' '/^[0-9]+: / {print $2}' | grep -E '^e[a-zA-Z0-9]+')
 
     # Verifica se foram detectadas interfaces Ethernet
@@ -147,7 +148,7 @@ ethernet_interfaces() {
         echo "Nenhuma interface Ethernet detectada."
         return 1
     else
-        echo "Interfaces Ethernet detectadas:"
+        # echo "Interfaces Ethernet detectadas:"
         # Retorna as interfaces detectadas
         echo "$ethernet_ifaces"
     fi
@@ -172,6 +173,7 @@ enable_proxy_arp() {
 # Função para Detectar Interfaces de Rede Virtual
 virtual_interfaces() {
     # Detecta todas as interfaces de rede virtuais que começam com 'v'
+    local virtual_ifaces
     virtual_ifaces=$(ip link show | awk -F': ' '/^[0-9]+: / {print $2}' | grep -E '^v[a-zA-Z0-9]+')
 
     # Verifica se foram detectadas interfaces virtuais
@@ -179,7 +181,7 @@ virtual_interfaces() {
         echo "Nenhuma interface de rede virtual detectada."
         return 1
     else
-        echo "Interfaces de rede virtual detectadas:"
+        # echo "Interfaces de rede virtual detectadas:"
         echo "$virtual_ifaces"
         # Retorna as interfaces detectadas
         echo "$virtual_ifaces"
