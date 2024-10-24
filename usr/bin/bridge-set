@@ -167,7 +167,7 @@ set_interfaces() {
         fi
         
 		# Verifica se há uma interface Wi-Fi ativa
-		there_wifi create
+		# there_wifi create
 
         # Se não há interfaces Wi-Fi, continuar com a detecção Ethernet
         # Detecta automaticamente as interfaces de rede físicas (ethernet)
@@ -335,6 +335,7 @@ case "$bridge_options" in
 # Cria a interface bridge
 create_bridge | create | --create | -c)
 	check_superuser # Chama a função para verificar se é superusuário
+	there_wifi create # Verifica se há uma interface Wi-Fi ativa e executa
 	restart_connection
 	create_bridge
   disable_wakeup
