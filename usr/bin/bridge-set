@@ -127,6 +127,29 @@ dhcpcd_ip_bridge() {
 	fi
 }
 
+# Função para Verificar se há uma interface Wi-Fi ativa
+there_wifi(){
+local bwset
+bwset="/usr/bin/bridge-wset"
+
+        # Verifica se há uma interface Wi-Fi ativa
+        wifi_interface=$(iw dev | grep -oP '(?<=Interface\s)\w+')
+
+        if [ -n "$wifi_interface" ]; then
+            echo "Interface Wi-Fi detectada: $wifi_interface"
+
+            # Executa o script secundário para configurar o Wi-Fi
+			# shellcheck source=/dev/null
+            # source /usr/bin/bridge-wset  # Certifique-se de que o caminho está correto
+            #set_winterfaces
+            # wbridge_main
+            $bwset "$@"
+
+            # Após executar o script secundário, sair da função
+            # return 0
+            exit 0
+        fi
+}
 # Função para selecionar a interface de rede
 set_interfaces() {
     # Verifica se o usuário especificou a Interface manualmente ou se o arquivo contém uma Interface
@@ -142,23 +165,9 @@ set_interfaces() {
         if [ -z "$interfaces" ]; then
             echo "Nenhuma interface Ethernet detectada."
         fi
-
-        # Verifica se há uma interface Wi-Fi ativa
-        wifi_interface=$(iw dev | grep -oP '(?<=Interface\s)\w+')
-
-        if [ -n "$wifi_interface" ]; then
-            echo "Interface Wi-Fi detectada: $wifi_interface"
-
-            # Executa o script secundário para configurar o Wi-Fi
-			# shellcheck source=/dev/null
-            source /usr/bin/bridge-wset  # Certifique-se de que o caminho está correto
-            #set_winterfaces
-            wbridge_main
-
-            # Após executar o script secundário, sair da função
-            # return 0
-            exit 0
-        fi
+        
+		# Verifica se há uma interface Wi-Fi ativa
+		there_wifi create
 
         # Se não há interfaces Wi-Fi, continuar com a detecção Ethernet
         # Detecta automaticamente as interfaces de rede físicas (ethernet)
@@ -334,6 +343,7 @@ create_bridge | create | --create | -c)
 # Remove a interface bridge
 stop_bridge | stop | --stop | -s)
 	check_superuser # Chama a função para verificar se é superusuário
+	there_wifi stop # Verifica se há uma interface Wi-Fi ativa e executa
 	remove_bridge
 	restart_connection
 	;;
@@ -344,6 +354,7 @@ restart_connection | restart | --restart | -r)
 	# Reinicia a conexão de rede principal e bridge
 	# restart_bridge_all | restart-all | --restart-all | -ra)
 	check_superuser # Chama a função para verificar se é superusuário
+	there_wifi restart # Verifica se há uma interface Wi-Fi ativa e executa
 	remove_bridge
 	restart_connection
 	create_bridge
