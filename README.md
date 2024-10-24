@@ -129,6 +129,11 @@ bridge_gw="192.168.1.1"
 ```
 >Se foi configurado "bridge_ip", **deve** configurar o Gateway em "bridge_gw".  
 
----
+___
+### Solução de problemas
+
+- dnsmasq não inicia: Siga o tópico [Archlinux, Solução dnsmasq não inicia](https://elppans.github.io/doc-linux/archlinux_solucao_dnsmasq_nao_inicia)
+
+___
 - **Observação**: O Script foi configurado para ser usado em rede cabeada. Não tenho placa WiFi para testar **no momento**.  
 ___
