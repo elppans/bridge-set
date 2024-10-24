@@ -8,6 +8,7 @@ pkgrel=1
 arch=('any')
 license=('CUSTOM')
 depends=('iproute2' 'networkmanager' 'bridge-utils' 'dhclient')
+depends+=('iw')
 depends+=('hostapd')
 depends+=('iptables')
 optdepends=('dhcpcd')
