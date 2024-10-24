@@ -309,7 +309,7 @@ configure_dnsmasq() {
 
     # Reinicia o serviço dnsmasq
     systemctl stop dnsmasq
-    killall dnsmasq
+    # killall dnsmasq
     systemctl start dnsmasq
     systemctl is-active --quiet dnsmasq && \
     echo "dnsmasq reiniciado com sucesso" || \
@@ -364,7 +364,6 @@ show_bridge_config() {
 
 # Função principal que orquestra a configuração da bridge e NAT
 wbridge_main() {
-    check_superuser
     echo "Configurando bridge com Wi-Fi e NAT..."
     set_winterfaces
     configure_bridge
@@ -376,6 +375,7 @@ wbridge_main() {
 
 # Função para remover a interface Bridge
 remove_bridge() {
+    set_winterfaces &>>/dev/null
 	sudo ip link set "$bridge_name" down
 	# sudo brctl delif "$bridge_name" "$main_winterface"
 	sudo brctl delbr "$bridge_name"
@@ -387,6 +387,7 @@ remove_bridge() {
 
 # Função para reiniciar a interface de rede
 restart_connection() {
+    set_winterfaces &>>/dev/null
 	# Chama a função para setar a interface
 	local connection
 	connection="$(nmcli -t -f GENERAL.CONNECTION device show "$main_winterface" | cut -f "2" -d ":")"
@@ -417,28 +418,22 @@ bdhclient=${bdhclient:-0} # Ajuste para 0 se quiser usar find_free_ip, 1 para us
 case "$bridge_options" in
 # Cria a interface bridge
 create_bridge | create | --create | -c)
-	# check_superuser # Chama a função para verificar se é superusuário
+	check_superuser # Chama a função para verificar se é superusuário
     wbridge_main
 	# test_connection &
 	;;
 # Remove a interface bridge
 stop_bridge | stop | --stop | -s)
 	check_superuser # Chama a função para verificar se é superusuário
-    set_winterfaces &>>/dev/null
 	remove_bridge
 	# restart_connection
 	;;
 # Reinicia a conexão de rede principal
 restart_connection | restart | --restart | -r)
-	# restart_connection
-	# ;;
-	# Reinicia a conexão de rede principal e bridge
-	# restart_bridge_all | restart-all | --restart-all | -ra)
 	check_superuser # Chama a função para verificar se é superusuário
-    set_winterfaces &>>/dev/null
 	remove_bridge
 	restart_connection
-	#create_bridge
+	# create_bridge
 	wbridge_main
 	;;
 # Testa a conexão DNS, caso falhe a rede Bridge é reiniciada
