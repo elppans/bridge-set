@@ -133,7 +133,7 @@ local bwset
 bwset="/usr/bin/bridge-wset"
 
         # Verifica se há uma interface Wi-Fi ativa
-        wifi_interface=$(iw dev | grep -oP '(?<=Interface\s)\w+')
+        wifi_interface=$(iw dev | grep -oP '(?<=Interface\s)\w+') &>>/dev/null
 
         if [ -n "$wifi_interface" ]; then
             echo "Interface Wi-Fi detectada: $wifi_interface"
