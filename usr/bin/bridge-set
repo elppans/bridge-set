@@ -11,7 +11,7 @@ shopt -s extglob
 #system
 readonly APP="${0##*/}"
 readonly _VERSION_='1.0.11-1'
-readonly DEPENDENCIES=(ip nmcli tput gettext dhclient dhcpcd)
+readonly DEPENDENCIES=(ip nmcli tput gettext dhclient)
 
 setVarColors() {
 	# shellcheck disable=SC2034
