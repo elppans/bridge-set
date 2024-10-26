@@ -59,7 +59,6 @@ die() {
 	exit 1
 }
 
-
 checkDependencies() {
 	local d
 	local errorFound=false
