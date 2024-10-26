@@ -336,7 +336,6 @@ configure_dnsmasq() {
 
     # Reinicia o serviço dnsmasq
     systemctl stop dnsmasq
-    # killall dnsmasq
     systemctl start dnsmasq
     systemctl is-active --quiet dnsmasq && \
     echo "dnsmasq reiniciado com sucesso" || \
@@ -426,6 +425,20 @@ restart_connection() {
 	nmcli connection up "${connection}"
 }
 
+test_connection() {
+	while true; do
+		if ping "$host_dns" -c 1 &>>/dev/null; then
+			sleep "$host_time"
+		else
+			# Reinicia a conexão de rede principal e bridge
+			check_superuser # Chama a função para verificar se é superusuário
+			remove_bridge
+			restart_connection
+			create_bridge
+		fi
+	done
+}
+
 setVarColors
 checkDependencies
 
@@ -441,6 +454,8 @@ interfaces="${interfaces:-$3}"
 bridge_name="${bridge_name:-br0}"
 bridge_ip="${bridge_ip:-$2}"
 bdhclient=${bdhclient:-0} # Ajuste para 0 se quiser usar find_free_ip, 1 para usar dhclient
+host_dns=${host_dns:-cloudflare.com}
+host_time=${host_time:-60}
 
 # Executa o script principal
 # wbridge_main
@@ -450,20 +465,17 @@ case "$bridge_options" in
 # Cria a interface bridge
 create_bridge | create | --create | -c)
 	create_bridge
-	# wbridge_main
 	# test_connection &
 	;;
 # Remove a interface bridge
 stop_bridge | stop | --stop | -s)
 	remove_bridge
-	# restart_connection
 	;;
 # Reinicia a conexão de rede principal
 restart_connection | restart | --restart | -r)
 	remove_bridge
 	restart_connection
 	create_bridge
-	# wbridge_main
 	;;
 # Testa a conexão DNS, caso falhe a rede Bridge é reiniciada
 test_connection | test | --test | -t)
