@@ -13,49 +13,49 @@ readonly _VERSION_='1.0.11-1'
 readonly DEPENDENCIES=(ip nmcli tput gettext dhclient)
 
 setVarColors() {
-	# shellcheck disable=SC2034
-	# Checar se o terminal suporta cores e inicializar `tput`
-	if command -v tput &> /dev/null; then
-		local colors=(black 0 red 196 green 2 yellow 3 blue 4 pink 5 magenta 5 \
-			cyan 6 white 7 gray 8 orange 202 purple 125 violet 61 \
-			light_red 9 light_green 10 light_yellow 11 light_blue 12 \
-			light_magenta 13 light_cyan 14 bright_white 15)
+    # shellcheck disable=SC2034
+    # Checar se o terminal suporta cores e inicializar `tput`
+    if command -v tput &>/dev/null; then
+        local colors=(black 0 red 196 green 2 yellow 3 blue 4 pink 5 magenta 5
+            cyan 6 white 7 gray 8 orange 202 purple 125 violet 61
+            light_red 9 light_green 10 light_yellow 11 light_blue 12
+            light_magenta 13 light_cyan 14 bright_white 15)
 
-		# Variáveis de estilo
-		reset=$(tput sgr0)
-		bold=$(tput bold)
-		underline=$(tput smul)
-		nounderline=$(tput rmul)
-		reverse=$(tput rev)
+        # Variáveis de estilo
+        reset=$(tput sgr0)
+        bold=$(tput bold)
+        underline=$(tput smul)
+        nounderline=$(tput rmul)
+        reverse=$(tput rev)
 
-		# Inicializar as cores no array
-		for ((i = 0; i < ${#colors[@]}; i+=2)); do
-			declare -g "${colors[i]}"="${bold}$(tput setaf "${colors[i+1]}")"
-		done
-	else
-		# Mensagem de erro se `tput` não for suportado
-		echo "${red}Erro: O comando 'tput' não está disponível.${reset}" >&2
-		unsetVarColors
-	fi
+        # Inicializar as cores no array
+        for ((i = 0; i < ${#colors[@]}; i += 2)); do
+            declare -g "${colors[i]}"="${bold}$(tput setaf "${colors[i + 1]}")"
+        done
+    else
+        # Mensagem de erro se `tput` não for suportado
+        echo "${red}Erro: O comando 'tput' não está disponível.${reset}" >&2
+        unsetVarColors
+    fi
 }
 
 unsetVarColors() {
-	unset reset
-	unset bold underline nounderline reverse
-	unset black red green yellow blue pink magenta cyan white gray orange purple violet
-	unset light_red light_green light_yellow light_blue light_magenta light_cyan bright_white
+    unset reset
+    unset bold underline nounderline reverse
+    unset black red green yellow blue pink magenta cyan white gray orange purple violet
+    unset light_red light_green light_yellow light_blue light_magenta light_cyan bright_white
 }
 
 DOT() {
-	# shellcheck disable=SC2154
-	printf "%s" "${blue}:: ${reset}"
+    # shellcheck disable=SC2154
+    printf "%s" "${blue}:: ${reset}"
 }
 
 die() {
-	local msg="$1"
-	shift
-	printf "%-75s\n" "$(DOT)${bold}${red}$msg${reset}" >&2
-	exit 1
+    local msg="$1"
+    shift
+    printf "%-75s\n" "$(DOT)${bold}${red}$msg${reset}" >&2
+    exit 1
 }
 
 checkDependencies() {
@@ -115,7 +115,7 @@ set_winterfaces() {
         # Se não houver interfaces Wi-Fi detectadas, sai da função
         if [ -z "$interfaces" ]; then
             echo "Nenhuma interface Wi-Fi detectada."
-            return 0  # Retorna o código de sucesso
+            return 0 # Retorna o código de sucesso
         fi
 
         # Seleciona a primeira interface Wi-Fi detectada como a principal
@@ -124,7 +124,7 @@ set_winterfaces() {
         # Verifica se a interface Wi-Fi está ativa
         if ! ip link show "$main_winterface" | grep -q "state UP"; then
             echo "A interface Wi-Fi $main_winterface não está ativa."
-            return 1  # Retorna o código de erro 1
+            return 1 # Retorna o código de erro 1
         fi
     fi
     export main_winterface
@@ -139,7 +139,7 @@ ethernet_interfaces() {
     # Verifica se foram detectadas interfaces Ethernet
     if [ -z "$ethernet_ifaces" ]; then
         echo "Nenhuma interface Ethernet detectada."
-        return 1  # Retorna o código de erro 1
+        return 1 # Retorna o código de erro 1
     else
         # echo "Interfaces Ethernet detectadas:"
         # Retorna as interfaces detectadas
@@ -152,7 +152,7 @@ enable_proxy_arp() {
     # Verifica se foram passadas interfaces Ethernet
     if [ -z "$1" ]; then
         echo "Nenhuma interface Ethernet foi passada para ativar Proxy ARP."
-        return 1  # Retorna o código de erro 1
+        return 1 # Retorna o código de erro 1
     fi
 
     # Ativa o Proxy ARP para cada interface Ethernet passada
@@ -172,7 +172,7 @@ virtual_interfaces() {
     # Verifica se foram detectadas interfaces virtuais
     if [ -z "$virtual_ifaces" ]; then
         echo "Nenhuma interface de rede virtual detectada."
-        return 1  # Retorna o código de erro 1
+        return 1 # Retorna o código de erro 1
     else
         # echo "Interfaces de rede virtual detectadas:"
         echo "$virtual_ifaces"
@@ -186,7 +186,7 @@ enable_virtual_proxy_arp() {
     # Verifica se foram passadas interfaces virtuais
     if [ -z "$1" ]; then
         echo "Nenhuma interface virtual foi passada para ativar Proxy ARP."
-        return 1  # Retorna o código de erro 1
+        return 1 # Retorna o código de erro 1
     fi
 
     # Ativa o Proxy ARP para cada interface virtual passada
@@ -217,55 +217,60 @@ find_free_ip() {
 
 # Função para configurar a bridge
 configure_bridge() {
-    # Detecta o IP da interface Wi-Fi e a sub-rede
-    wifi_ip=$(ip -4 addr show "$main_winterface" | grep -oP '(?<=inet\s)\d+(\.\d+){3}')
-    subnet=$(ip -4 addr show "$main_winterface" | grep -oP '(?<=inet\s)\d+(\.\d+){3}/\d+')
+    # Verifica se a interface br0 existe
+    if ip link show "$bridge_name" &>/dev/null; then
+        echo "A interface ""$bridge_name"" já existe."
+    else
+        # Detecta o IP da interface Wi-Fi e a sub-rede
+        wifi_ip=$(ip -4 addr show "$main_winterface" | grep -oP '(?<=inet\s)\d+(\.\d+){3}')
+        subnet=$(ip -4 addr show "$main_winterface" | grep -oP '(?<=inet\s)\d+(\.\d+){3}/\d+')
 
-    # Se não for possível obter o IP, saímos do script
-    if [ -z "$wifi_ip" ]; then
-        echo "Não foi possível detectar o IP da interface Wi-Fi ($main_winterface). Verifique se a interface está conectada."
-        exit 1
-    fi
+        # Se não for possível obter o IP, saímos do script
+        if [ -z "$wifi_ip" ]; then
+            echo "Não foi possível detectar o IP da interface Wi-Fi ($main_winterface). Verifique se a interface está conectada."
+            exit 1
+        fi
 
-    # Extrai a base do IP da rede (os três primeiros octetos)
-    base_ip=$(echo "$wifi_ip" | cut -d'.' -f1-3)
+        # Extrai a base do IP da rede (os três primeiros octetos)
+        base_ip=$(echo "$wifi_ip" | cut -d'.' -f1-3)
 
-    # Desassocia a interface Wi-Fi de qualquer bridge existente
-    ip link set "$main_winterface" nomaster
+        # Desassocia a interface Wi-Fi de qualquer bridge existente
+        ip link set "$main_winterface" nomaster
 
-    # Cria a interface de bridge (br0)
-    ip link add name "$bridge_name" type bridge
+        # Cria a interface de bridge (br0)
+        ip link add name "$bridge_name" type bridge
 
-    # Ativa a interface bridge
-    ip link set dev "$bridge_name" up
+        # Ativa a interface bridge
+        ip link set dev "$bridge_name" up
 
-    # Configura o IP da interface bridge (br0), com base no valor de bdhclient
-    if [ "$bdhclient" -eq 0 ]; then
-        if [ -n "$bridge_ip" ]; then
-            # Verifica se a máscara está presente
-            if [[ $bridge_ip =~ "/" ]]; then
-                # Remove a máscara
-                free_ip="${bridge_ip%%/*}"
-                echo "Atribuir o IP $free_ip"
+        # Configura o IP da interface bridge (br0), com base no valor de bdhclient
+        if [ "$bdhclient" -eq 0 ]; then
+            if [ -n "$bridge_ip" ]; then
+                # Verifica se a máscara está presente
+                if [[ $bridge_ip =~ "/" ]]; then
+                    # Remove a máscara
+                    free_ip="${bridge_ip%%/*}"
+                    echo "Atribuir o IP $free_ip"
+                else
+                    # A máscara não está presente, atribui o valor original
+                    free_ip="$bridge_ip"
+                    echo "Atribuir o IP $free_ip"
+                fi
             else
-                # A máscara não está presente, atribui o valor original
-                free_ip="$bridge_ip"
+                free_ip=$(find_free_ip "$base_ip" "$subnet")
                 echo "Atribuir o IP $free_ip"
             fi
+            echo "Configurando o IP $free_ip na interface $bridge_name..."
+            ip address add dev "$bridge_name" "${free_ip}/24"
         else
-            free_ip=$(find_free_ip "$base_ip" "$subnet")
-            echo "Atribuir o IP $free_ip"
+            # Usa dhclient para obter um IP via DHCP
+            echo "Usando dhclient para obter um IP via DHCP na interface $bridge_name..."
+            dhclient -r "$bridge_name"
         fi
-        echo "Configurando o IP $free_ip na interface $bridge_name..."
-        ip address add dev "$bridge_name" "${free_ip}/24"
-    else
-        # Usa dhclient para obter um IP via DHCP
-        echo "Usando dhclient para obter um IP via DHCP na interface $bridge_name..."
-        dhclient -r "$bridge_name"
-    fi
 
-    # Ativa a interface Wi-Fi
-    ip link set "$main_winterface" up
+        # Ativa a interface Wi-Fi
+        ip link set "$main_winterface" up
+    fi
 }
 
 # Função para verificar se dnsmasq está em execução e se é gerenciado pelo libvirt
