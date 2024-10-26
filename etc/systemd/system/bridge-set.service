@@ -1,6 +1,6 @@
 [Unit]
 # Configuração da Interface Bridge
-Description=Configuração da Interface Bridge
+Description=Bridge Interface Configuration
 After=network.target
 After=NetworkManager.service
 
@@ -9,8 +9,8 @@ After=NetworkManager.service
 Type=forking
 ExecStartPre=/bin/sleep 5
 ExecStart=/usr/bin/bridge-set -c
-ExecReload=/usr/bin/bridge-set -r
-ExecStop=/usr/bin/bridge-set -s
+# ExecReload=/usr/bin/bridge-set -r
+# ExecStop=/usr/bin/bridge-set -s
 Restart=always
 RestartSec=3s
 
