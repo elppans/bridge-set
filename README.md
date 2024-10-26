@@ -132,8 +132,18 @@ bridge_gw="192.168.1.1"
 ___
 ### Solução de problemas
 
-- dnsmasq não inicia: Siga o tópico [Archlinux, Solução dnsmasq não inicia](https://elppans.github.io/doc-linux/archlinux_solucao_dnsmasq_nao_inicia)
+- dnsmasq não inicia:
 
+Se o dnsmasq reportar um erro ao tentar vincular (bind) o socket do servidor DHCP com a mensagem **"endereço já está em uso"**, isso geralmente indica que outro processo está utilizando a mesma porta ou recurso de rede.
+
+#### libvirt+dnsmasq
+
+Se você utiliza máquinas virtuais com libvirt (como no Virt Manager ou QEMU), o serviço dnsmasq gerenciado pelo libvirt pode estar ocupando as mesmas portas ou processos.  
+Siga o tópico [Archlinux, Solução dnsmasq não inicia#Desativando a Rede default do Libvirt e o Serviço dnsmasq](https://elppans.github.io/doc-linux/archlinux_solucao_dnsmasq_nao_inicia#desativando-a-rede-default-do-libvirt-e-o-servi%C3%A7o-dnsmasq)  
+
+#### NetworkManager+dnsmasq
+Serviços como NetworkManager, systemd-resolved ou outros servidores DNS (como bind ou unbound) podem estar em execução e utilizando as mesmas portas que o dnsmasq, causando conflitos.  
+Siga o tópico [Archlinux, Solução dnsmasq não inicia#Desativar o DNS interno do NetworkManager](https://elppans.github.io/doc-linux/archlinux_solucao_dnsmasq_nao_inicia#2-desativar-o-dns-interno-do-networkmanager).
 ___
 - **Observação**: O Script foi configurado para ser usado em rede cabeada. Não tenho placa WiFi para testar **no momento**.  
 ___
