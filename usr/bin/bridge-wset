@@ -372,12 +372,31 @@ configure_nat_forwarding() {
     sudo sysctl -a | grep net.ipv4.conf."$main_winterface".proxy_arp
     sudo sysctl -a | grep net.ipv4.conf."$bridge_name".proxy_arp
 
+    # Limpar as regras existentes
+    iptables -F
+    iptables -t nat -F
+    iptables -t mangle -F
+    iptables -X
+
+        # Permitir tráfego na Bridge
+    iptables -A FORWARD -i "$bridge_name" -j ACCEPT
+    iptables -A FORWARD -o "$bridge_name" -j ACCEPT
+
+    # Permitir tráfego de entrada e saída da interface física
+    iptables -A INPUT -i "$main_winterface" -j ACCEPT
+    iptables -A OUTPUT -o "$main_winterface" -j ACCEPT
+
+        # Permitir encaminhamento entre a bridge e a interface física
+    iptables -A FORWARD -i "$bridge_name" -o "$main_winterface" -j ACCEPT
+    iptables -A FORWARD -i "$main_winterface" -o "$bridge_name" -j ACCEPT
+
     # Verifica se a regra de MASQUERADE já existe
     if ! iptables -t nat -C POSTROUTING -o "$main_winterface" -j MASQUERADE 2>/dev/null; then
         iptables -t nat -A POSTROUTING -o "$main_winterface" -j MASQUERADE
     fi
     echo "Regras do iptables:"
-    iptables -t nat -L -n -v
+    iptables -L -v -n
+    iptables -t nat -L -v -n
 }
 
 # Função para exibir a configuração da bridge
