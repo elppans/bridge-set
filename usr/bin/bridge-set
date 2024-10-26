@@ -128,64 +128,63 @@ dhcpcd_ip_bridge() {
 }
 
 # Função para Verificar se há uma interface Wi-Fi ativa
-there_wifi(){
-local bwset
-bwset="/usr/bin/bridge-wset"
+there_wifi() {
+	local bwset
+	bwset="/usr/bin/bridge-wset"
 
-        # Verifica se há uma interface Wi-Fi ativa
-        wifi_interface=$(iw dev | grep -oP '(?<=Interface\s)\w+')
+	# Verifica se há uma interface Wi-Fi ativa
+	wifi_interface=$(iw dev | grep -oP '(?<=Interface\s)\w+')
 
-        if [ -n "$wifi_interface" ]; then
-            echo "Interface Wi-Fi detectada: $wifi_interface"
+	if [ -n "$wifi_interface" ]; then
+		echo "Interface Wi-Fi detectada: $wifi_interface"
 
-            # Executa o script secundário para configurar o Wi-Fi
-			# shellcheck source=/dev/null
-            # source /usr/bin/bridge-wset  # Certifique-se de que o caminho está correto
-            #set_winterfaces
-            # wbridge_main
-            $bwset "$@"
+		# Executa o script secundário para configurar o Wi-Fi
+		# shellcheck source=/dev/null
+		# source /usr/bin/bridge-wset  # Certifique-se de que o caminho está correto
+		#set_winterfaces
+		# wbridge_main
+		$bwset "$@"
 
-            # Após executar o script secundário, sair da função
-            # return 0
-            exit 0
-        fi
+		# Após executar o script secundário, sair da função
+		# return 0
+		exit 0
+	fi
 }
 # Função para selecionar a interface de rede
 set_interfaces() {
-    # Verifica se o usuário especificou a Interface manualmente ou se o arquivo contém uma Interface
-    if [ -n "$interfaces" ]; then
-        main_interface="$interfaces"
-        export main_interface
-    else
-        # Detecta automaticamente as interfaces de rede físicas (ethernet)
-        interfaces=${interfaces:-"$(ip link show up | awk -F ': ' '/^[0-9]+:/ {print $2}' | grep -v '^lo$\|^vmnet\|^vnet\|^virbr\|^br')"}
+	# Verifica se o usuário especificou a Interface manualmente ou se o arquivo contém uma Interface
+	if [ -n "$interfaces" ]; then
+		main_interface="$interfaces"
+		export main_interface
+	else
+		# Detecta automaticamente as interfaces de rede físicas (ethernet)
+		interfaces=${interfaces:-"$(ip link show up | awk -F ': ' '/^[0-9]+:/ {print $2}' | grep -v '^lo$\|^vmnet\|^vnet\|^virbr\|^br')"}
 		export interfaces
 
-        # Verifica se não existem interfaces físicas de rede detectadas
-        if [ -z "$interfaces" ]; then
-            echo "Nenhuma interface Ethernet detectada."
-        fi
-        
+		# Verifica se não existem interfaces físicas de rede detectadas
+		if [ -z "$interfaces" ]; then
+			echo "Nenhuma interface Ethernet detectada."
+		fi
+
 		# Verifica se há uma interface Wi-Fi ativa
 		# there_wifi create
 
-        # Se não há interfaces Wi-Fi, continuar com a detecção Ethernet
-        # Detecta automaticamente as interfaces de rede físicas (ethernet)
-        main_interface=$(echo "$interfaces" | head -n 1)
-        export main_interface
+		# Se não há interfaces Wi-Fi, continuar com a detecção Ethernet
+		# Detecta automaticamente as interfaces de rede físicas (ethernet)
+		main_interface=$(echo "$interfaces" | head -n 1)
+		export main_interface
 
-        # Seleciona a rota da Interface detectada
-        main_route="$(ip route show dev "$main_interface" | awk '/default/ {print $3}')"
-        export main_route
-        bridge_gw=${bridge_gw:-"$main_route"}
-        export bridge_gw
+		# Seleciona a rota da Interface detectada
+		main_route="$(ip route show dev "$main_interface" | awk '/default/ {print $3}')"
+		export main_route
+		bridge_gw=${bridge_gw:-"$main_route"}
+		export bridge_gw
 
-        # Seleciona o IP da Interface detectada
-        main_ip=$(ip addr show dev "$main_interface" | awk '/inet / {print $2}')
-        export main_ip
-    fi
+		# Seleciona o IP da Interface detectada
+		main_ip=$(ip addr show dev "$main_interface" | awk '/inet / {print $2}')
+		export main_ip
+	fi
 }
-
 
 # Função para configurar um IP livre ou especifico para a interface Bridge
 set_bridge() {
@@ -280,10 +279,14 @@ remove_bridge() {
 restart_connection() {
 	# Chama a função para setar a interface
 	set_interfaces
-	local connection
-	connection="$(nmcli -t -f GENERAL.CONNECTION device show "$main_interface" | cut -f "2" -d ":")"
-	nmcli connection down "${connection}"
-	nmcli connection up "${connection}"
+	# local connection
+	# connection="$(nmcli -t -f GENERAL.CONNECTION device show "$main_interface" | cut -f "2" -d ":")"
+	# nmcli connection down "${connection}"
+	# nmcli connection up "${connection}"
+	for connection in $(nmcli -t -f NAME,DEVICE connection show --active | grep -vE '^(lo$\|veth\|vmnet\|vnet\|virbr\|br|docker)'); do
+		nmcli connection down "$connection"
+		nmcli connection up "$connection"
+	done
 }
 
 test_connection() {
@@ -302,13 +305,13 @@ test_connection() {
 
 # Função para desativar o wakeup da interface de rede
 disable_wakeup() {
-    file_path="/sys/class/net/$main_interface/device/power/wakeup"
-    local file_path
-    # Verifica se o arquivo existe
-    if [ -f "$file_path" ]; then
-        # Se o arquivo existir, execute o comando
-        echo "disabled" | tee "$file_path"
-    fi
+	file_path="/sys/class/net/$main_interface/device/power/wakeup"
+	local file_path
+	# Verifica se o arquivo existe
+	if [ -f "$file_path" ]; then
+		# Se o arquivo existir, execute o comando
+		echo "disabled" | tee "$file_path"
+	fi
 }
 
 setVarColors
@@ -334,7 +337,7 @@ host_time=${host_time:-60}
 case "$bridge_options" in
 # Cria a interface bridge
 create_bridge | create | --create | -c)
-	check_superuser # Chama a função para verificar se é superusuário
+	check_superuser   # Chama a função para verificar se é superusuário
 	there_wifi create # Verifica se há uma interface Wi-Fi ativa e executa
 	restart_connection
 	create_bridge
@@ -354,7 +357,7 @@ restart_connection | restart | --restart | -r)
 	# ;;
 	# Reinicia a conexão de rede principal e bridge
 	# restart_bridge_all | restart-all | --restart-all | -ra)
-	check_superuser # Chama a função para verificar se é superusuário
+	check_superuser    # Chama a função para verificar se é superusuário
 	there_wifi restart # Verifica se há uma interface Wi-Fi ativa e executa
 	remove_bridge
 	restart_connection
