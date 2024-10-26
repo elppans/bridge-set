@@ -14,6 +14,7 @@ install:
 	@echo "            Script bridge-set"
 	@echo ":: Aguarde, instalando software bridge-set em: ${BINDIR}"
 	@install -Dm755 "usr/bin/bridge-set" "/usr/bin/bridge-set"
+	@install -Dm755 "usr/bin/bridge-wset" "/usr/bin/bridge-wset"
 	@install -Dm644 "opt/bridge-set/bridge-set.conf.pacnew" "/opt/bridge-set/bridge-set.conf.pacnew"
 	@install -Dm644 "etc/systemd/system/bridge-set.service" "/etc/systemd/system/bridge-set.service"
 	@install -d ${DOCDIR}/
@@ -30,6 +31,7 @@ uninstall:
 	@systemctl daemon-reload
 	systemctl stop bridge-set
 	@rm ${BINDIR}/bridge-set
+	@rm ${BINDIR}/bridge-wset
 	@rm "/opt/bridge-set/bridge-set.conf.pacnew"
 	@rm "/etc/systemd/system/bridge-set.service"
 	@rm -rf ${DOCDIR}

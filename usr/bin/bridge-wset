@@ -12,90 +12,90 @@ readonly _VERSION_='1.0.11-1'
 readonly DEPENDENCIES=(ip nmcli tput gettext dhclient dhcpcd)
 
 setVarColors() {
-	# does the terminal support true-color?
-	if [[ -n "$(command -v "tput")" ]]; then
-		#tput setaf 127 | cat -v  			#capturar saida
-		: "${reset=$(tput sgr0)}"
-		: "${bold=$(tput bold)}"
-		: "${underline=$(tput smul)}"   # Início do sublinhado
-		: "${nounderline=$(tput rmul)}" # Fim do sublinhado
-		: "${reverse=$(tput rev)}"      # Inverte as cores de fundo e texto
+    # does the terminal support true-color?
+    if [[ -n "$(command -v "tput")" ]]; then
+        #tput setaf 127 | cat -v  			#capturar saida
+        : "${reset=$(tput sgr0)}"
+        : "${bold=$(tput bold)}"
+        : "${underline=$(tput smul)}"   # Início do sublinhado
+        : "${nounderline=$(tput rmul)}" # Fim do sublinhado
+        : "${reverse=$(tput rev)}"      # Inverte as cores de fundo e texto
 
-		# Definir as cores ANSI como variáveis
-		: "${black=$(tput bold)$(tput setaf 0)}"
-		: "${red=$(tput bold)$(tput setaf 196)}"
-		: "${green=$(tput bold)$(tput setaf 2)}"
-		: "${yellow=$(tput bold)$(tput setaf 3)}"
-		: "${blue=$(tput setaf 4)}"
-		: "${pink=$(tput setaf 5)}"
-		: "${magenta=$(tput setaf 5)}"
-		: "${cyan=$(tput setaf 6)}"
-		: "${white=$(tput setaf 7)}"
-		: "${gray=$(tput setaf 8)}"
-		: "${orange=$(tput setaf 202)}"
-		: "${purple=$(tput setaf 125)}"
-		: "${violet=$(tput setaf 61)}"
-		: "${light_red=$(tput setaf 9)}"
-		: "${light_green=$(tput setaf 10)}"
-		: "${light_yellow=$(tput setaf 11)}"
-		: "${light_blue=$(tput setaf 12)}"
-		: "${light_magenta=$(tput setaf 13)}"
-		: "${light_cyan=$(tput setaf 14)}"
-		: "${bright_white=$(tput setaf 15)}"
-	else
-		unsetVarColors
-	fi
+        # Definir as cores ANSI como variáveis
+        : "${black=$(tput bold)$(tput setaf 0)}"
+        : "${red=$(tput bold)$(tput setaf 196)}"
+        : "${green=$(tput bold)$(tput setaf 2)}"
+        : "${yellow=$(tput bold)$(tput setaf 3)}"
+        : "${blue=$(tput setaf 4)}"
+        : "${pink=$(tput setaf 5)}"
+        : "${magenta=$(tput setaf 5)}"
+        : "${cyan=$(tput setaf 6)}"
+        : "${white=$(tput setaf 7)}"
+        : "${gray=$(tput setaf 8)}"
+        : "${orange=$(tput setaf 202)}"
+        : "${purple=$(tput setaf 125)}"
+        : "${violet=$(tput setaf 61)}"
+        : "${light_red=$(tput setaf 9)}"
+        : "${light_green=$(tput setaf 10)}"
+        : "${light_yellow=$(tput setaf 11)}"
+        : "${light_blue=$(tput setaf 12)}"
+        : "${light_magenta=$(tput setaf 13)}"
+        : "${light_cyan=$(tput setaf 14)}"
+        : "${bright_white=$(tput setaf 15)}"
+    else
+        unsetVarColors
+    fi
 }
 
 unsetVarColors() {
-	unset reset
-	unset bold underline nounderline reverse
-	unset black red green yellow blue pink magenta cyan white gray orange purple violeta
-	unset light_red light_green light_yellow light_blue light_magenta light_cyan bright_white
+    unset reset
+    unset bold underline nounderline reverse
+    unset black red green yellow blue pink magenta cyan white gray orange purple violeta
+    unset light_red light_green light_yellow light_blue light_magenta light_cyan bright_white
 }
 
 DOT() {
-	printf "%s" "${blue}:: ${reset}"
+    printf "%s" "${blue}:: ${reset}"
 }
 
 die() {
-	local msg="$1"
-	shift
-	printf "%-75s\n" "$(DOT)${bold}${red}$msg${reset}" >&2
-	exit 1
+    local msg="$1"
+    shift
+    printf "%-75s\n" "$(DOT)${bold}${red}$msg${reset}" >&2
+    exit 1
 }
 
 checkDependencies() {
-	local d
-	local errorFound=false
-	declare -a missing
+    local d
+    local errorFound=false
+    declare -a missing
 
-	for d in "${DEPENDENCIES[@]}"; do
-		if [[ -z $(command -v "$d") ]]; then
-			errorFound=true
-			missing+=("$d")
-			printf '%s\n' "${red}ERRO${reset}: não encontrei o comando ${cyan}'$d'${reset}"
-		fi
-	done
-	if $errorFound; then
-		echo "${yellow}--------------IMPOSSÍVEL CONTINUAR-------------${reset}"
-		echo "Esse script precisa dos comandos listados acima"
-		echo "Instale-os e/ou verifique se estão no seu \$PATH"
-		echo "${yellow}-----------------------------------------------${reset}"
-		die "Execução abortada"
-	fi
+    for d in "${DEPENDENCIES[@]}"; do
+        if [[ -z $(command -v "$d") ]]; then
+            errorFound=true
+            missing+=("$d")
+            printf '%s\n' "${red}ERRO${reset}: não encontrei o comando ${cyan}'$d'${reset}"
+        fi
+    done
+    if $errorFound; then
+        echo "${yellow}--------------IMPOSSÍVEL CONTINUAR-------------${reset}"
+        echo "Esse script precisa dos comandos listados acima"
+        echo "Instale-os e/ou verifique se estão no seu \$PATH"
+        echo "${yellow}-----------------------------------------------${reset}"
+        die "Execução abortada"
+    fi
 }
 
 # Função para verificar se é root
 check_superuser() {
-	if [ "$(id -u)" != "0" ]; then
-		die "$(gettext "Este parâmetro deve ser executado como root") ${yellow}root"
-	fi
+    if [ "$(id -u)" != "0" ]; then
+        die "$(gettext "Este parâmetro deve ser executado como root") ${yellow}root"
+    fi
 }
 
 # Função para exibir informações de ajuda
 show_help() {
-	cat <<-EOF
+    cat <<-EOF
 		${red}${APP} v${_VERSION_}${reset}
 		${red}Uso: ${reset}$APP ${cyan}[opções]${reset}
 
@@ -210,7 +210,7 @@ find_free_ip() {
 
     # Pingar IPs do range para verificar se estão disponíveis (ignora os IPs de .1 a .9)
     for i in {10..254}; do
-        ping -c 1 -W 1 "${base_ip}.${i}" > /dev/null 2>&1
+        ping -c 1 -W 1 "${base_ip}.${i}" >/dev/null 2>&1
         # shellcheck disable=SC2181
         if [ $? -ne 0 ]; then
             echo "${base_ip}.${i}"
@@ -249,16 +249,16 @@ configure_bridge() {
     # Configura o IP da interface bridge (br0), com base no valor de bdhclient
     if [ "$bdhclient" -eq 0 ]; then
         if [ -n "$bridge_ip" ]; then
-# Verifica se a máscara está presente
-if [[ $bridge_ip =~ "/" ]]; then
-  # Remove a máscara
-  free_ip="${bridge_ip%%/*}"
-  echo "Atribuir o IP $free_ip"
-else
-  # A máscara não está presente, atribui o valor original
-  free_ip="$bridge_ip"
-  echo "Atribuir o IP $free_ip"
-fi
+            # Verifica se a máscara está presente
+            if [[ $bridge_ip =~ "/" ]]; then
+                # Remove a máscara
+                free_ip="${bridge_ip%%/*}"
+                echo "Atribuir o IP $free_ip"
+            else
+                # A máscara não está presente, atribui o valor original
+                free_ip="$bridge_ip"
+                echo "Atribuir o IP $free_ip"
+            fi
         else
             free_ip=$(find_free_ip "$base_ip" "$subnet")
             echo "Atribuir o IP $free_ip"
@@ -314,8 +314,8 @@ configure_dnsmasq() {
 
     add_config() {
         echo "Adicionando nova configuração ao dnsmasq..."
-        echo "$br0_config" >> "$dnsmasq_conf"
-        echo "$ip_range_config" >> "$dnsmasq_conf"
+        echo "$br0_config" >>"$dnsmasq_conf"
+        echo "$ip_range_config" >>"$dnsmasq_conf"
     }
 
     if [[ -n "$existing_br0" && -n "$existing_ip_range" ]]; then
@@ -337,47 +337,47 @@ configure_dnsmasq() {
     # Reinicia o serviço dnsmasq
     systemctl stop dnsmasq
     systemctl start dnsmasq
-    systemctl is-active --quiet dnsmasq && \
-    echo "dnsmasq reiniciado com sucesso" || \
-    echo "Falha ao reiniciar o dnsmasq"
+    systemctl is-active --quiet dnsmasq &&
+        echo "dnsmasq reiniciado com sucesso" ||
+        echo "Falha ao reiniciar o dnsmasq"
 }
 
 # Função para configurar o NAT e o encaminhamento
 configure_nat_forwarding() {
-# Habilita o encaminhamento de pacotes
-sysctl -w net.ipv4.ip_forward=1
+    # Habilita o encaminhamento de pacotes
+    sysctl -w net.ipv4.ip_forward=1
 
-# Ativar o Proxy ARP nas Interfaces
+    # Ativar o Proxy ARP nas Interfaces
 
-# Chama a função para detectar interfaces Ethernet
-eth_interfaces=$(ethernet_interfaces)
+    # Chama a função para detectar interfaces Ethernet
+    eth_interfaces=$(ethernet_interfaces)
 
-# Se a detecção foi bem-sucedida, ativa o Proxy ARP
-# shellcheck disable=SC2181
-if [ $? -eq 0 ]; then
-    enable_proxy_arp "$eth_interfaces"
-fi
+    # Se a detecção foi bem-sucedida, ativa o Proxy ARP
+    # shellcheck disable=SC2181
+    if [ $? -eq 0 ]; then
+        enable_proxy_arp "$eth_interfaces"
+    fi
 
-# Chama a função para detectar interfaces virtuais
-virt_interfaces=$(virtual_interfaces)
+    # Chama a função para detectar interfaces virtuais
+    virt_interfaces=$(virtual_interfaces)
 
-# Se a detecção foi bem-sucedida, ativa o Proxy ARP
-# shellcheck disable=SC2181
-if [ $? -eq 0 ]; then
-    enable_virtual_proxy_arp "$virt_interfaces"
-fi
+    # Se a detecção foi bem-sucedida, ativa o Proxy ARP
+    # shellcheck disable=SC2181
+    if [ $? -eq 0 ]; then
+        enable_virtual_proxy_arp "$virt_interfaces"
+    fi
 
-sysctl -w net.ipv4.conf."$main_winterface".proxy_arp=1  # Ativa o Proxy ARP na interface Wi-Fi wlp1s0
-sysctl -w net.ipv4.conf."$bridge_name".proxy_arp=1     # Ativa o Proxy ARP na interface Bridge br0
+    sysctl -w net.ipv4.conf."$main_winterface".proxy_arp=1 # Ativa o Proxy ARP na interface Wi-Fi wlp1s0
+    sysctl -w net.ipv4.conf."$bridge_name".proxy_arp=1     # Ativa o Proxy ARP na interface Bridge br0
 
-sudo sysctl -a | grep net.ipv4.ip_forward
-sudo sysctl -a | grep net.ipv4.conf."$main_winterface".proxy_arp
-sudo sysctl -a | grep net.ipv4.conf."$bridge_name".proxy_arp
+    sudo sysctl -a | grep net.ipv4.ip_forward
+    sudo sysctl -a | grep net.ipv4.conf."$main_winterface".proxy_arp
+    sudo sysctl -a | grep net.ipv4.conf."$bridge_name".proxy_arp
 
-# Verifica se a regra de MASQUERADE já existe
-if ! iptables -t nat -C POSTROUTING -o "$main_winterface" -j MASQUERADE 2>/dev/null; then
-    iptables -t nat -A POSTROUTING -o "$main_winterface" -j MASQUERADE
-fi
+    # Verifica se a regra de MASQUERADE já existe
+    if ! iptables -t nat -C POSTROUTING -o "$main_winterface" -j MASQUERADE 2>/dev/null; then
+        iptables -t nat -A POSTROUTING -o "$main_winterface" -j MASQUERADE
+    fi
     echo "Regras do iptables:"
     iptables -t nat -L -n -v
 }
@@ -406,37 +406,37 @@ create_bridge() {
 remove_bridge() {
     check_superuser # Chama a função para verificar se é superusuário
     set_winterfaces &>>/dev/null
-	sudo ip link set "$bridge_name" down
-	# sudo brctl delif "$bridge_name" "$main_winterface"
-	sudo brctl delbr "$bridge_name"
-	# Exibe informações da interface de rede
-	ip addr show "$main_winterface"
-	# Exibe as informações da rota
-	# ip route
+    sudo ip link set "$bridge_name" down
+    # sudo brctl delif "$bridge_name" "$main_winterface"
+    sudo brctl delbr "$bridge_name"
+    # Exibe informações da interface de rede
+    ip addr show "$main_winterface"
+    # Exibe as informações da rota
+    # ip route
 }
 
 # Função para reiniciar a interface de rede
 restart_connection() {
     set_winterfaces &>>/dev/null
-	# Chama a função para setar a interface
-	local connection
-	connection="$(nmcli -t -f GENERAL.CONNECTION device show "$main_winterface" | cut -f "2" -d ":")"
-	nmcli connection down "${connection}"
-	nmcli connection up "${connection}"
+    # Chama a função para setar a interface
+    local connection
+    connection="$(nmcli -t -f GENERAL.CONNECTION device show "$main_winterface" | cut -f "2" -d ":")"
+    nmcli connection down "${connection}"
+    nmcli connection up "${connection}"
 }
 
 test_connection() {
-	while true; do
-		if ping "$host_dns" -c 1 &>>/dev/null; then
-			sleep "$host_time"
-		else
-			# Reinicia a conexão de rede principal e bridge
-			check_superuser # Chama a função para verificar se é superusuário
-			remove_bridge
-			restart_connection
-			create_bridge
-		fi
-	done
+    while true; do
+        if ping "$host_dns" -c 1 &>>/dev/null; then
+            sleep "$host_time"
+        else
+            # Reinicia a conexão de rede principal e bridge
+            check_superuser # Chama a função para verificar se é superusuário
+            remove_bridge
+            restart_connection
+            create_bridge
+        fi
+    done
 }
 
 setVarColors
@@ -444,8 +444,8 @@ checkDependencies
 
 # Arquivo environment para configuração de IP FIXO para a Interface Bridge
 if [[ -f "/opt/bridge-set/bridge-set.conf" ]]; then
-	# shellcheck source=/dev/null
-	source /opt/bridge-set/bridge-set.conf
+    # shellcheck source=/dev/null
+    source /opt/bridge-set/bridge-set.conf
 fi
 
 # Variáveis globais
@@ -464,24 +464,24 @@ host_time=${host_time:-60}
 case "$bridge_options" in
 # Cria a interface bridge
 create_bridge | create | --create | -c)
-	create_bridge
-	# test_connection &
-	;;
+    create_bridge
+    # test_connection &
+    ;;
 # Remove a interface bridge
 stop_bridge | stop | --stop | -s)
-	remove_bridge
-	;;
+    remove_bridge
+    ;;
 # Reinicia a conexão de rede principal
 restart_connection | restart | --restart | -r)
-	remove_bridge
-	restart_connection
-	create_bridge
-	;;
+    remove_bridge
+    restart_connection
+    create_bridge
+    ;;
 # Testa a conexão DNS, caso falhe a rede Bridge é reiniciada
 test_connection | test | --test | -t)
-	test_connection
-	;;
+    test_connection
+    ;;
 *)
-	show_help
-	;;
+    show_help
+    ;;
 esac
