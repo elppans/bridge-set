@@ -292,7 +292,7 @@ check_libvirt_dnsmasq() {
             echo "O dnsmasq está em execução e é gerenciado pelo libvirt."
 
             # Desativa a rede 'default' do libvirt
-            sudo virsh net-destroy default
+            virsh net-destroy default &>>/dev/null
             echo "Rede 'default' do libvirt foi desativada."
         else
             echo "O dnsmasq não está sendo executado pelo libvirt."
