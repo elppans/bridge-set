@@ -279,7 +279,7 @@ remove_bridge() {
 restart_connection() {
 	# Chama a função para setar a interface
 	set_interfaces
-	for connection in $(nmcli -t -f NAME,DEVICE connection show --active | grep -vE '^(lo$\|veth\|vmnet\|vnet\|virbr\|br|docker)'); do
+	for connection in $(nmcli -t -f NAME connection show --active | grep -vE '^(lo$\|veth\|vmnet\|vnet\|virbr\|br|docker)'); do
 		nmcli connection down "$connection"
 		nmcli connection up "$connection"
 	done
