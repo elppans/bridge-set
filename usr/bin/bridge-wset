@@ -115,7 +115,7 @@ set_winterfaces() {
         # Se não houver interfaces Wi-Fi detectadas, sai da função
         if [ -z "$interfaces" ]; then
             echo "Nenhuma interface Wi-Fi detectada."
-            return 0
+            return 0  # Retorna o código de sucesso
         fi
 
         # Seleciona a primeira interface Wi-Fi detectada como a principal
@@ -124,7 +124,7 @@ set_winterfaces() {
         # Verifica se a interface Wi-Fi está ativa
         if ! ip link show "$main_winterface" | grep -q "state UP"; then
             echo "A interface Wi-Fi $main_winterface não está ativa."
-            return 0
+            return 1  # Retorna o código de erro 1
         fi
     fi
     export main_winterface
@@ -139,7 +139,7 @@ ethernet_interfaces() {
     # Verifica se foram detectadas interfaces Ethernet
     if [ -z "$ethernet_ifaces" ]; then
         echo "Nenhuma interface Ethernet detectada."
-        return 1
+        return 1  # Retorna o código de erro 1
     else
         # echo "Interfaces Ethernet detectadas:"
         # Retorna as interfaces detectadas
@@ -152,7 +152,7 @@ enable_proxy_arp() {
     # Verifica se foram passadas interfaces Ethernet
     if [ -z "$1" ]; then
         echo "Nenhuma interface Ethernet foi passada para ativar Proxy ARP."
-        return 1
+        return 1  # Retorna o código de erro 1
     fi
 
     # Ativa o Proxy ARP para cada interface Ethernet passada
@@ -172,7 +172,7 @@ virtual_interfaces() {
     # Verifica se foram detectadas interfaces virtuais
     if [ -z "$virtual_ifaces" ]; then
         echo "Nenhuma interface de rede virtual detectada."
-        return 1
+        return 1  # Retorna o código de erro 1
     else
         # echo "Interfaces de rede virtual detectadas:"
         echo "$virtual_ifaces"
@@ -186,7 +186,7 @@ enable_virtual_proxy_arp() {
     # Verifica se foram passadas interfaces virtuais
     if [ -z "$1" ]; then
         echo "Nenhuma interface virtual foi passada para ativar Proxy ARP."
-        return 1
+        return 1  # Retorna o código de erro 1
     fi
 
     # Ativa o Proxy ARP para cada interface virtual passada
