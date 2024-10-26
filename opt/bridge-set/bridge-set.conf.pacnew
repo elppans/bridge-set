@@ -49,3 +49,9 @@ host_dns=""
 # Padrão: 60 Segundos
 # Exemplo: host_time='300' # 5 Minutos
 host_time=""
+
+# bdhclient: Controla como o IP será atribuído à interface Bridge (br0) ao configurar a rede com Wi-Fi.
+# - Defina como 0 para usar a função 'find_free_ip', que detecta manualmente um IP livre no range da rede Wi-Fi.
+# - Defina como 1 para usar o 'dhclient', que obtém um IP automaticamente via DHCP.
+# Padrão: 0
+bdhclient=""

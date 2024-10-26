@@ -1,4 +1,3 @@
- 
 
 ---
 
@@ -83,23 +82,23 @@ systemctl status bridge-set.service
 
 ## Configuração do IP FIXO da Interface Bridge para o Serviço
 
-Edite o arquivo `/opt/bridge-set/bridge-set.conf` e configure as variáveis correspondentes.  
+Edite o arquivo `/opt/bridge-set/bridge-set.conf` e configure as variáveis correspondentes.
 
-- **interfaces**: (Opcional)Esta variável armazena uma lista de interfaces de rede físicas (como “eth0”, “eth1”, etc.).  
- 
-Exemplo:  
+- **interfaces**: (Opcional)Esta variável armazena uma lista de interfaces de rede físicas (como “eth0”, “eth1”, etc.).
+
+Exemplo:
 ```bash
-interfaces="eth0"  
+interfaces="eth0"
 ```
 
-- **bridge_name**: Esta variável é usada para especificar o nome da bridge de rede.  
-Uma bridge é uma interface de rede virtual que combina várias interfaces físicas em uma única interface lógica.  
-Ela permite que os pacotes de rede sejam encaminhados entre as interfaces físicas associadas à bridge.  
-O padrão para o nome da bridge costuma ser “**br0**”, mas você pode escolher um nome diferente, se desejar.   
-O importante é que o nome seja único e não conflite com outros dispositivos de rede.  
-Exemplo:   
+- **bridge_name**: Esta variável é usada para especificar o nome da bridge de rede.
+Uma bridge é uma interface de rede virtual que combina várias interfaces físicas em uma única interface lógica.
+Ela permite que os pacotes de rede sejam encaminhados entre as interfaces físicas associadas à bridge.
+O padrão para o nome da bridge costuma ser “**br0**”, mas você pode escolher um nome diferente, se desejar.
+O importante é que o nome seja único e não conflite com outros dispositivos de rede.
+Exemplo:
 ```bash
-bridge_name="bridge0"  
+bridge_name="bridge0"
 ```
 - **bridge_ip**: Essa variável define o endereço IP fixo para a bridge.  
 Uso: Insira um `endereço IP` específico para a bridge e utilize um "`prefixo de sub-rede`"  
@@ -129,6 +128,22 @@ Exemplo:
 bridge_gw="192.168.1.1"  
 ```
 >Se foi configurado "bridge_ip", **deve** configurar o Gateway em "bridge_gw".  
+
+___
+### Solução de problemas
+
+- dnsmasq não inicia:
+
+Se o dnsmasq reportar um erro ao tentar vincular (bind) o socket do servidor DHCP com a mensagem **"endereço já está em uso"**, isso geralmente indica que outro processo está utilizando a mesma porta ou recurso de rede.
+
+#### libvirt+dnsmasq
+
+Se você utiliza máquinas virtuais com libvirt (como no Virt Manager ou QEMU), o serviço dnsmasq gerenciado pelo libvirt pode estar ocupando as mesmas portas ou processos.  
+Siga o tópico [Archlinux, Solução dnsmasq não inicia#Desativando a Rede default do Libvirt e o Serviço dnsmasq](https://elppans.github.io/doc-linux/archlinux_solucao_dnsmasq_nao_inicia#desativando-a-rede-default-do-libvirt-e-o-servi%C3%A7o-dnsmasq)  
+
+#### NetworkManager+dnsmasq
+Serviços como NetworkManager, systemd-resolved ou outros servidores DNS (como bind ou unbound) podem estar em execução e utilizando as mesmas portas que o dnsmasq, causando conflitos.  
+Siga o tópico [Archlinux, Solução dnsmasq não inicia#Desativar o DNS interno do NetworkManager](https://elppans.github.io/doc-linux/archlinux_solucao_dnsmasq_nao_inicia#2-desativar-o-dns-interno-do-networkmanager).
 ___
 - **Observação**: O Script foi configurado para ser usado em rede cabeada. Não tenho placa WiFi para testar **no momento**.  
 ___

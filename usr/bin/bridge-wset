@@ -1,0 +1,485 @@
+#!/usr/bin/env bash
+
+#debug
+# shellcheck disable=SC2154
+export PS4='${red}${0##*/}${green}[$FUNCNAME]${pink}[$LINENO]${reset} '
+#set -x
+#set -e
+shopt -s extglob
+
+#system
+readonly APP="${0##*/}"
+readonly _VERSION_='1.0.11-1'
+readonly DEPENDENCIES=(ip nmcli tput gettext dhclient)
+
+setVarColors() {
+    # shellcheck disable=SC2034
+    # Checar se o terminal suporta cores e inicializar `tput`
+    if command -v tput &>/dev/null; then
+        local colors=(black 0 red 196 green 2 yellow 3 blue 4 pink 5 magenta 5
+            cyan 6 white 7 gray 8 orange 202 purple 125 violet 61
+            light_red 9 light_green 10 light_yellow 11 light_blue 12
+            light_magenta 13 light_cyan 14 bright_white 15)
+
+        # Variáveis de estilo
+        reset=$(tput sgr0)
+        bold=$(tput bold)
+        underline=$(tput smul)
+        nounderline=$(tput rmul)
+        reverse=$(tput rev)
+
+        # Inicializar as cores no array
+        for ((i = 0; i < ${#colors[@]}; i += 2)); do
+            declare -g "${colors[i]}"="${bold}$(tput setaf "${colors[i + 1]}")"
+        done
+    else
+        # Mensagem de erro se `tput` não for suportado
+        echo "${red}Erro: O comando 'tput' não está disponível.${reset}" >&2
+        unsetVarColors
+    fi
+}
+
+unsetVarColors() {
+    unset reset
+    unset bold underline nounderline reverse
+    unset black red green yellow blue pink magenta cyan white gray orange purple violet
+    unset light_red light_green light_yellow light_blue light_magenta light_cyan bright_white
+}
+
+DOT() {
+    # shellcheck disable=SC2154
+    printf "%s" "${blue}:: ${reset}"
+}
+
+die() {
+    local msg="$1"
+    shift
+    printf "%-75s\n" "$(DOT)${bold}${red}$msg${reset}" >&2
+    exit 1
+}
+
+checkDependencies() {
+    local d
+    local errorFound=false
+    declare -a missing
+
+    for d in "${DEPENDENCIES[@]}"; do
+        if [[ -z $(command -v "$d") ]]; then
+            errorFound=true
+            missing+=("$d")
+            printf '%s\n' "${red}ERRO${reset}: não encontrei o comando ${cyan}'$d'${reset}"
+        fi
+    done
+    if $errorFound; then
+        echo "${yellow}--------------IMPOSSÍVEL CONTINUAR-------------${reset}"
+        echo "Esse script precisa dos comandos listados acima"
+        echo "Instale-os e/ou verifique se estão no seu \$PATH"
+        echo "${yellow}-----------------------------------------------${reset}"
+        die "Execução abortada"
+    fi
+}
+
+# Função para verificar se é root
+check_superuser() {
+    if [ "$(id -u)" != "0" ]; then
+        die "$(gettext "Este parâmetro deve ser executado como root") ${yellow}root"
+    fi
+}
+
+# Função para exibir informações de ajuda
+show_help() {
+    cat <<-EOF
+		${red}${APP} v${_VERSION_}${reset}
+		${red}Uso: ${reset}$APP ${cyan}[opções]${reset}
+
+			${cyan}Opções:${reset}
+			-c|create|--create                        ${cyan}# Cria interface bridge ${yellow}'$bridge_name'${cyan} e atribui IP automatico ${reset}
+			-c|create|--create [<IP>                  ${cyan}# Cria interface bridge ${yellow}'$bridge_name'${cyan} e atribui IP informado ${reset}
+			-c|create|--create [<IP>] [<INTERFACE>]   ${cyan}# Cria interface bridge ${yellow}'$bridge_name'${cyan} e atribui IP e interface de rede informados ${reset}
+			-r|restart|--restart                      ${cyan}# Reinicia a conexão de rede principal e recria interface bridge ${yellow}'$bridge_name' ${reset}
+			-s|stop|--stop                            ${cyan}# Remove interface bridge ${yellow}'$bridge_name' ${reset}
+			-t|test|--test                            ${cyan}# Testa a conexão DNS, caso falhe a rede Bridge é reiniciada ${reset}
+			-h|help|--help                            ${cyan}# Mostra este Help ${reset}
+	EOF
+}
+
+# Função para configurar as interfaces
+set_winterfaces() {
+    # Verifica se o usuário especificou a Interface manualmente ou se o arquivo contém uma Interface
+    if [ -n "$interfaces" ]; then
+        main_winterface="$interfaces"
+    else
+        # Detecta automaticamente as interfaces de rede Wi-Fi
+        interfaces=$(iw dev | grep -oP '(?<=Interface\s)\w+')
+
+        # Se não houver interfaces Wi-Fi detectadas, sai da função
+        if [ -z "$interfaces" ]; then
+            echo "Nenhuma interface Wi-Fi detectada."
+            return 0 # Retorna o código de sucesso
+        fi
+
+        # Seleciona a primeira interface Wi-Fi detectada como a principal
+        main_winterface=$(echo "$interfaces" | head -n 1)
+
+        # Verifica se a interface Wi-Fi está ativa
+        if ! ip link show "$main_winterface" | grep -q "state UP"; then
+            echo "A interface Wi-Fi $main_winterface não está ativa."
+            return 1 # Retorna o código de erro 1
+        fi
+    fi
+    export main_winterface
+}
+
+# Função para Detectar Interfaces Ethernet
+ethernet_interfaces() {
+    # Detecta todas as interfaces Ethernet que começam com 'e'
+    local ethernet_ifaces
+    ethernet_ifaces=$(ip link show | awk -F': ' '/^[0-9]+: / {print $2}' | grep -E '^e[a-zA-Z0-9]+')
+
+    # Verifica se foram detectadas interfaces Ethernet
+    if [ -z "$ethernet_ifaces" ]; then
+        echo "Nenhuma interface Ethernet detectada."
+        return 1 # Retorna o código de erro 1
+    else
+        # echo "Interfaces Ethernet detectadas:"
+        # Retorna as interfaces detectadas
+        echo "$ethernet_ifaces"
+    fi
+}
+
+# Função para Ativar Proxy ARP
+enable_proxy_arp() {
+    # Verifica se foram passadas interfaces Ethernet
+    if [ -z "$1" ]; then
+        echo "Nenhuma interface Ethernet foi passada para ativar Proxy ARP."
+        return 1 # Retorna o código de erro 1
+    fi
+
+    # Ativa o Proxy ARP para cada interface Ethernet passada
+    for eth in $1; do
+        sysctl -w net.ipv4.conf."$eth".proxy_arp=1
+        sudo sysctl -a | grep net.ipv4.conf."$eth".proxy_arp
+        echo "Proxy ARP ativado na interface $eth."
+    done
+}
+
+# Função para Detectar Interfaces de Rede Virtual
+virtual_interfaces() {
+    # Detecta todas as interfaces de rede virtuais que começam com 'v'
+    local virtual_ifaces
+    virtual_ifaces=$(ip link show | awk -F': ' '/^[0-9]+: / {print $2}' | grep -E '^v[a-zA-Z0-9]+')
+
+    # Verifica se foram detectadas interfaces virtuais
+    if [ -z "$virtual_ifaces" ]; then
+        echo "Nenhuma interface de rede virtual detectada."
+        return 1 # Retorna o código de erro 1
+    else
+        # echo "Interfaces de rede virtual detectadas:"
+        echo "$virtual_ifaces"
+        # Retorna as interfaces detectadas
+        echo "$virtual_ifaces"
+    fi
+}
+
+# Função para Ativar Proxy ARP para Interfaces Virtuais
+enable_virtual_proxy_arp() {
+    # Verifica se foram passadas interfaces virtuais
+    if [ -z "$1" ]; then
+        echo "Nenhuma interface virtual foi passada para ativar Proxy ARP."
+        return 1 # Retorna o código de erro 1
+    fi
+
+    # Ativa o Proxy ARP para cada interface virtual passada
+    for viface in $1; do
+        sysctl -w net.ipv4.conf."$viface".proxy_arp=1
+        echo "Proxy ARP ativado na interface virtual $viface."
+    done
+}
+
+# Função para detectar um IP livre no range da rede Wi-Fi
+find_free_ip() {
+    local base_ip=$1
+    local subnet=$2
+
+    # Pingar IPs do range para verificar se estão disponíveis (ignora os IPs de .1 a .9)
+    for i in {10..254}; do
+        ping -c 1 -W 1 "${base_ip}.${i}" >/dev/null 2>&1
+        # shellcheck disable=SC2181
+        if [ $? -ne 0 ]; then
+            echo "${base_ip}.${i}"
+            return 0
+        fi
+    done
+
+    echo "Não foi encontrado um IP livre na rede $subnet"
+    exit 1
+}
+
+# Função para configurar a bridge
+configure_bridge() {
+    # Verifica se a interface br0 existe
+    if ip link show "$bridge_name" &>/dev/null; then
+        echo "A interface ""$bridge_name"" já existe."
+    else
+        # Detecta o IP da interface Wi-Fi e a sub-rede
+        wifi_ip=$(ip -4 addr show "$main_winterface" | grep -oP '(?<=inet\s)\d+(\.\d+){3}')
+        subnet=$(ip -4 addr show "$main_winterface" | grep -oP '(?<=inet\s)\d+(\.\d+){3}/\d+')
+
+        # Se não for possível obter o IP, saímos do script
+        if [ -z "$wifi_ip" ]; then
+            echo "Não foi possível detectar o IP da interface Wi-Fi ($main_winterface). Verifique se a interface está conectada."
+            exit 1
+        fi
+
+        # Extrai a base do IP da rede (os três primeiros octetos)
+        base_ip=$(echo "$wifi_ip" | cut -d'.' -f1-3)
+
+        # Desassocia a interface Wi-Fi de qualquer bridge existente
+        ip link set "$main_winterface" nomaster
+
+        # Cria a interface de bridge (br0)
+        ip link add name "$bridge_name" type bridge
+
+        # Ativa a interface bridge
+        ip link set dev "$bridge_name" up
+
+        # Configura o IP da interface bridge (br0), com base no valor de bdhclient
+        if [ "$bdhclient" -eq 0 ]; then
+            if [ -n "$bridge_ip" ]; then
+                # Verifica se a máscara está presente
+                if [[ $bridge_ip =~ "/" ]]; then
+                    # Remove a máscara
+                    free_ip="${bridge_ip%%/*}"
+                    echo "Atribuir o IP $free_ip"
+                else
+                    # A máscara não está presente, atribui o valor original
+                    free_ip="$bridge_ip"
+                    echo "Atribuir o IP $free_ip"
+                fi
+            else
+                free_ip=$(find_free_ip "$base_ip" "$subnet")
+                echo "Atribuir o IP $free_ip"
+            fi
+            echo "Configurando o IP $free_ip na interface $bridge_name..."
+            ip address add dev "$bridge_name" "${free_ip}/24"
+        else
+            # Usa dhclient para obter um IP via DHCP
+            echo "Usando dhclient para obter um IP via DHCP na interface $bridge_name..."
+            dhclient -r "$bridge_name"
+        fi
+
+        # Ativa a interface Wi-Fi
+        ip link set "$main_winterface" up
+    fi
+}
+
+# Função para verificar se dnsmasq está em execução e se é gerenciado pelo libvirt
+check_libvirt_dnsmasq() {
+    # Lista todas as redes do libvirt, incluindo as inativas
+    networks=$(sudo virsh net-list --all)
+
+    # Verifica se a rede 'default' está presente
+    if echo "$networks" | grep -q 'default'; then
+        echo "Rede 'default' do libvirt encontrada."
+
+        # Procura por processos dnsmasq e verifica se são gerenciados pelo libvirt
+        # shellcheck disable=SC2009
+        dnsmasq_process=$(ps aux | grep '[d]nsmasq' | grep libvirt)
+
+        if [[ -n "$dnsmasq_process" ]]; then
+            echo "O dnsmasq está em execução e é gerenciado pelo libvirt."
+
+            # Desativa a rede 'default' do libvirt
+            virsh net-destroy default &>>/dev/null
+            echo "Rede 'default' do libvirt foi desativada."
+        else
+            echo "O dnsmasq não está sendo executado pelo libvirt."
+        fi
+    # else
+    #     echo "Rede 'default' do libvirt não encontrada."
+    fi
+}
+
+# Função para configurar o dnsmasq
+configure_dnsmasq() {
+    dnsmasq_conf="/etc/dnsmasq.conf"
+    br0_config="interface=$bridge_name"
+    ip_range_config="dhcp-range=${base_ip}.10,${base_ip}.200,255.255.255.0,24h"
+
+    # Verifica se a configuração já existe no dnsmasq.conf
+    existing_br0=$(grep -Fx "$br0_config" "$dnsmasq_conf")
+    existing_ip_range=$(grep -Fx "$ip_range_config" "$dnsmasq_conf")
+
+    add_config() {
+        echo "Adicionando nova configuração ao dnsmasq..."
+        echo "$br0_config" >>"$dnsmasq_conf"
+        echo "$ip_range_config" >>"$dnsmasq_conf"
+    }
+
+    if [[ -n "$existing_br0" && -n "$existing_ip_range" ]]; then
+        echo "As configurações já existem no dnsmasq."
+
+        if [[ "$existing_br0" == "$br0_config" && "$existing_ip_range" == "$ip_range_config" ]]; then
+            echo "As configurações são iguais. Reiniciando o serviço dnsmasq..."
+        else
+            echo "As configurações são diferentes. Removendo as antigas e aplicando as novas..."
+            sed -i "/interface=$bridge_name/d" "$dnsmasq_conf"
+            sed -i "/dhcp-range=${base_ip}/d" "$dnsmasq_conf"
+            add_config
+        fi
+    else
+        echo "A configuração não existe. Adicionando ao dnsmasq..."
+        add_config
+    fi
+
+    # Reinicia o serviço dnsmasq
+    systemctl stop dnsmasq
+    systemctl start dnsmasq
+    systemctl is-active --quiet dnsmasq &&
+        echo "dnsmasq reiniciado com sucesso" ||
+        echo "Falha ao reiniciar o dnsmasq"
+}
+
+# Função para configurar o NAT e o encaminhamento
+configure_nat_forwarding() {
+    # Habilita o encaminhamento de pacotes
+    sysctl -w net.ipv4.ip_forward=1
+
+    # Ativar o Proxy ARP nas Interfaces
+
+    # Chama a função para detectar interfaces Ethernet
+    eth_interfaces=$(ethernet_interfaces)
+
+    # Se a detecção foi bem-sucedida, ativa o Proxy ARP
+    # shellcheck disable=SC2181
+    if [ $? -eq 0 ]; then
+        enable_proxy_arp "$eth_interfaces"
+    fi
+
+    # Chama a função para detectar interfaces virtuais
+    virt_interfaces=$(virtual_interfaces)
+
+    # Se a detecção foi bem-sucedida, ativa o Proxy ARP
+    # shellcheck disable=SC2181
+    if [ $? -eq 0 ]; then
+        enable_virtual_proxy_arp "$virt_interfaces"
+    fi
+
+    sysctl -w net.ipv4.conf."$main_winterface".proxy_arp=1 # Ativa o Proxy ARP na interface Wi-Fi wlp1s0
+    sysctl -w net.ipv4.conf."$bridge_name".proxy_arp=1     # Ativa o Proxy ARP na interface Bridge br0
+
+    sudo sysctl -a | grep net.ipv4.ip_forward
+    sudo sysctl -a | grep net.ipv4.conf."$main_winterface".proxy_arp
+    sudo sysctl -a | grep net.ipv4.conf."$bridge_name".proxy_arp
+
+    # Verifica se a regra de MASQUERADE já existe
+    if ! iptables -t nat -C POSTROUTING -o "$main_winterface" -j MASQUERADE 2>/dev/null; then
+        iptables -t nat -A POSTROUTING -o "$main_winterface" -j MASQUERADE
+    fi
+    echo "Regras do iptables:"
+    iptables -t nat -L -n -v
+}
+
+# Função para exibir a configuração da bridge
+show_bridge_config() {
+    echo "Configuração da bridge:"
+    brctl show
+}
+
+# Função principal que orquestra a configuração da bridge e NAT
+# wbridge_main() {
+create_bridge() {
+    check_superuser # Chama a função para verificar se é superusuário
+    echo "Configurando bridge com Wi-Fi e NAT..."
+    set_winterfaces
+    configure_bridge
+    check_libvirt_dnsmasq
+    configure_dnsmasq
+    configure_nat_forwarding
+    show_bridge_config
+    echo "Configuração de rede concluída."
+}
+
+# Função para remover a interface Bridge
+remove_bridge() {
+    check_superuser # Chama a função para verificar se é superusuário
+    set_winterfaces &>>/dev/null
+    sudo ip link set "$bridge_name" down
+    # sudo brctl delif "$bridge_name" "$main_winterface"
+    sudo brctl delbr "$bridge_name"
+    # Exibe informações da interface de rede
+    ip addr show "$main_winterface"
+    # Exibe as informações da rota
+    # ip route
+}
+
+# Função para reiniciar a interface de rede
+restart_connection() {
+    set_winterfaces &>>/dev/null
+    # Chama a função para setar a interface
+    local connection
+    connection="$(nmcli -t -f GENERAL.CONNECTION device show "$main_winterface" | cut -f "2" -d ":")"
+    nmcli connection down "${connection}"
+    nmcli connection up "${connection}"
+}
+
+test_connection() {
+    while true; do
+        if ping "$host_dns" -c 1 &>>/dev/null; then
+            sleep "$host_time"
+        else
+            # Reinicia a conexão de rede principal e bridge
+            check_superuser # Chama a função para verificar se é superusuário
+            remove_bridge
+            restart_connection
+            create_bridge
+        fi
+    done
+}
+
+setVarColors
+checkDependencies
+
+# Arquivo environment para configuração de IP FIXO para a Interface Bridge
+if [[ -f "/opt/bridge-set/bridge-set.conf" ]]; then
+    # shellcheck source=/dev/null
+    source /opt/bridge-set/bridge-set.conf
+fi
+
+# Variáveis globais
+bridge_options="$1"
+interfaces="${interfaces:-$3}"
+bridge_name="${bridge_name:-br0}"
+bridge_ip="${bridge_ip:-$2}"
+bdhclient=${bdhclient:-0} # Ajuste para 0 se quiser usar find_free_ip, 1 para usar dhclient
+host_dns=${host_dns:-cloudflare.com}
+host_time=${host_time:-60}
+
+# Executa o script principal
+# wbridge_main
+
+# Verifica as opções e executa a função apropriada
+case "$bridge_options" in
+# Cria a interface bridge
+create_bridge | create | --create | -c)
+    create_bridge
+    # test_connection &
+    ;;
+# Remove a interface bridge
+stop_bridge | stop | --stop | -s)
+    remove_bridge
+    ;;
+# Reinicia a conexão de rede principal
+restart_connection | restart | --restart | -r)
+    remove_bridge
+    restart_connection
+    create_bridge
+    ;;
+# Testa a conexão DNS, caso falhe a rede Bridge é reiniciada
+test_connection | test | --test | -t)
+    test_connection
+    ;;
+*)
+    show_help
+    ;;
+esac

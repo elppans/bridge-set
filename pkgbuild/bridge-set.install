@@ -1,0 +1,34 @@
+post_install() {
+	systemctl daemon-reload
+	cat <<END
+
+O bridge-set foi instalado com sucesso...
+Faça o comando "bridge-set" sem parametros para ver o help;
+Para mais informações, acesse o README no github.
+
+END
+	# Caminho para o arquivo bridge-set.conf
+	bridgesetconf="/opt/bridge-set/bridge-set.conf"
+	bridgesetconfnew="/opt/bridge-set/bridge-set.conf.pacnew"
+
+	# Verifica se o arquivo existe
+	if [ -f "${bridgesetconf}" ]; then
+		echo "warning: ${bridgesetconf} installed as ${bridgesetconfnew}"
+	else
+		# Renomeia o novo arquivo para o nome original
+		mv "${bridgesetconfnew}" "${bridgesetconf}"
+	fi
+}
+
+post_upgrade() {
+    post_install
+}
+
+post_remove() {
+
+	cat <<END
+
+O "bridge-set" foi removido.
+
+END
+}
