@@ -275,6 +275,33 @@ fi
     ip link set "$main_winterface" up
 }
 
+# Função para verificar se dnsmasq está em execução e se é gerenciado pelo libvirt
+check_libvirt_dnsmasq() {
+    # Lista todas as redes do libvirt, incluindo as inativas
+    networks=$(sudo virsh net-list --all)
+
+    # Verifica se a rede 'default' está presente
+    if echo "$networks" | grep -q 'default'; then
+        echo "Rede 'default' do libvirt encontrada."
+
+        # Procura por processos dnsmasq e verifica se são gerenciados pelo libvirt
+        # shellcheck disable=SC2009
+        dnsmasq_process=$(ps aux | grep '[d]nsmasq' | grep libvirt)
+
+        if [[ -n "$dnsmasq_process" ]]; then
+            echo "O dnsmasq está em execução e é gerenciado pelo libvirt."
+
+            # Desativa a rede 'default' do libvirt
+            sudo virsh net-destroy default
+            echo "Rede 'default' do libvirt foi desativada."
+        else
+            echo "O dnsmasq não está sendo executado pelo libvirt."
+        fi
+    # else
+    #     echo "Rede 'default' do libvirt não encontrada."
+    fi
+}
+
 # Função para configurar o dnsmasq
 configure_dnsmasq() {
     dnsmasq_conf="/etc/dnsmasq.conf"
@@ -363,10 +390,13 @@ show_bridge_config() {
 }
 
 # Função principal que orquestra a configuração da bridge e NAT
-wbridge_main() {
+# wbridge_main() {
+create_bridge() {
+    check_superuser # Chama a função para verificar se é superusuário
     echo "Configurando bridge com Wi-Fi e NAT..."
     set_winterfaces
     configure_bridge
+    check_libvirt_dnsmasq
     configure_dnsmasq
     configure_nat_forwarding
     show_bridge_config
@@ -375,6 +405,7 @@ wbridge_main() {
 
 # Função para remover a interface Bridge
 remove_bridge() {
+    check_superuser # Chama a função para verificar se é superusuário
     set_winterfaces &>>/dev/null
 	sudo ip link set "$bridge_name" down
 	# sudo brctl delif "$bridge_name" "$main_winterface"
@@ -418,23 +449,21 @@ bdhclient=${bdhclient:-0} # Ajuste para 0 se quiser usar find_free_ip, 1 para us
 case "$bridge_options" in
 # Cria a interface bridge
 create_bridge | create | --create | -c)
-	check_superuser # Chama a função para verificar se é superusuário
-    wbridge_main
+	create_bridge
+	# wbridge_main
 	# test_connection &
 	;;
 # Remove a interface bridge
 stop_bridge | stop | --stop | -s)
-	check_superuser # Chama a função para verificar se é superusuário
 	remove_bridge
 	# restart_connection
 	;;
 # Reinicia a conexão de rede principal
 restart_connection | restart | --restart | -r)
-	check_superuser # Chama a função para verificar se é superusuário
 	remove_bridge
 	restart_connection
-	# create_bridge
-	wbridge_main
+	create_bridge
+	# wbridge_main
 	;;
 # Testa a conexão DNS, caso falhe a rede Bridge é reiniciada
 test_connection | test | --test | -t)
