@@ -133,7 +133,7 @@ local bwset
 bwset="/usr/bin/bridge-wset"
 
         # Verifica se há uma interface Wi-Fi ativa
-        wifi_interface=$(iw dev | grep -oP '(?<=Interface\s)\w+') &>>/dev/null
+        wifi_interface=$(iw dev | grep -oP '(?<=Interface\s)\w+')
 
         if [ -n "$wifi_interface" ]; then
             echo "Interface Wi-Fi detectada: $wifi_interface"
@@ -280,10 +280,11 @@ remove_bridge() {
 restart_connection() {
 	# Chama a função para setar a interface
 	set_interfaces
-	local connection
-	connection="$(nmcli -t -f GENERAL.CONNECTION device show "$main_interface" | cut -f "2" -d ":")"
-	nmcli connection down "${connection}"
-	nmcli connection up "${connection}"
+for connection in $(nmcli -t -f NAME connection show --active); do
+    nmcli connection down "$connection"
+    nmcli connection up "$connection"
+done
+
 }
 
 test_connection() {
@@ -338,7 +339,7 @@ create_bridge | create | --create | -c)
 	there_wifi create # Verifica se há uma interface Wi-Fi ativa e executa
 	restart_connection
 	create_bridge
-  disable_wakeup
+	disable_wakeup
 	test_connection &
 	;;
 # Remove a interface bridge
