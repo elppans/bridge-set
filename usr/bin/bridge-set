@@ -280,11 +280,11 @@ remove_bridge() {
 restart_connection() {
 	# Chama a função para setar a interface
 	set_interfaces
-for connection in $(nmcli -t -f NAME connection show --active); do
-    nmcli connection down "$connection"
-    nmcli connection up "$connection"
-done
-
+# for connection in $(nmcli -t -f NAME connection show --active); do
+#     nmcli connection down "$connection"
+#     nmcli connection up "$connection"
+# done
+nmcli networking off && nmcli networking on
 }
 
 test_connection() {
