@@ -11,7 +11,7 @@ ExecStartPre=/bin/sleep 5
 ExecStart=/usr/bin/bridge-set -c
 # ExecReload=/usr/bin/bridge-set -r
 # ExecStop=/usr/bin/bridge-set -s
-Restart=on-failure
+Restart=always
 RestartSec=3s
 
 # serviço será executado durante a inicialização padrão do sistema
