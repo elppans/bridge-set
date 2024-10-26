@@ -13,7 +13,6 @@ depends+=('hostapd')
 depends+=('iptables')
 optdepends=('dhcpcd')
 pkgdesc="Cria uma ponte de rede (bridge) para combinar várias interfaces em uma única conexão."
-#url="https://github.com/vcatafesta/${pkgname}"
 url="https://github.com/elppans/${pkgname}"
 source=("git+${url}.git#branch=main")
 #sha256sums=("ceb19612672b5ddf98a7965f88fb0b0c214c85ba23122135fe9d164590fcad42"
