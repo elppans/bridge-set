@@ -209,7 +209,7 @@ create_bridge() {
 
 	# Configurar IP na interface Bridge
 	if [ "$ip_config" == "1" ]; then
-		echo "${cyan}Configurando IP fixo na ponte $bridge_name${reset}"
+		echo "${cyan}Configurando IP $bridge_ip na ponte $bridge_name${reset}"
 		# Configura o IP fixo na interface Bridge
 		ip address add dev "$bridge_name" "$bridge_ip"
 
