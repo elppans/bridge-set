@@ -222,16 +222,10 @@ set_ip_bridge() {
 		ip address add dev "$bridge_name" "$bridge_ip"
 		# Configura a máscara na interface Bridge
 		# shellcheck disable=SC2236
-		if [ -n "$bridge_mask" ]; then
-			ip address add dev "$bridge_name" "$bridge_mask"
-		fi
+		[[ "$bridge_mask" ]] && ip address add dev "$bridge_name" "$bridge_mask"
 		# Configura o Gateway na interface Bridge
-		if [ -n "$bridge_gw" ]; then
-			#ip route add default via "$bridge_gw"
-			#ip route append default via "$bridge_gw" dev "$bridge_name"
-			ip route add default via "$bridge_gw" dev "$bridge_name" metric 100
-		fi
-	else
+		[[ "$bridge_gw" ]] && ip route add default via "$bridge_gw" dev "$bridge_name" metric 100
+		else
 		# Chama a função para configurar o IP via DHCPD na Interface Bridge
 		dhcpcd_ip_bridge
 	fi
