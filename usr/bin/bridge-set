@@ -284,22 +284,31 @@ remove_bridge() {
 	echo "${cyan}Desativando a ponte $bridge_name...${reset}"
 	sudo ip link set "$bridge_name" down
 
+	# Remove o gateway associado à ponte, se existir
+	echo "${cyan}Removendo o gateway padrão da ponte $bridge_name, se existir...${reset}"
+	# bridge_gw=$(ip route | grep "^default.*dev $bridge_name" | awk '{print $3}')
+	if [ -n "$bridge_gw" ]; then
+		sudo ip route del default via "$bridge_gw" dev "$bridge_name"
+		echo "${cyan}Gateway padrão $bridge_gw removido da ponte $bridge_name.${reset}"
+	else
+		echo "${cyan}Nenhum gateway padrão encontrado para a ponte $bridge_name.${reset}"
+	fi
+
 	# Exibindo informações da(s) interfaces físicas
 	for iface in $interfaces; do
 		export iface
-	echo "${cyan}Removendo a interface $iface da ponte $bridge_name...${reset}"
-	sudo brctl delif "$bridge_name" "$iface"
+		echo "${cyan}Removendo a interface $iface da ponte $bridge_name...${reset}"
+		sudo brctl delif "$bridge_name" "$iface"
 	done
 
 	echo "${cyan}Removendo a ponte $bridge_name...${reset}"
 	sudo brctl delbr "$bridge_name"
 
 	# Exibe informações da interface de rede
-	# Exibindo informações da(s) interfaces físicas
 	for iface in $interfaces; do
 		export iface
-	echo "${cyan}Exibindo informações da interface de rede $iface...${reset}"
-	ip addr show "$iface"
+		echo "${cyan}Exibindo informações da interface de rede $iface...${reset}"
+		ip addr show "$iface"
 	done
 
 	# Exibe as informações da rota
