@@ -195,31 +195,44 @@ create_bridge() {
 	echo "${cyan}Ativando STP na ponte $bridge_name${reset}"
 	ip link set dev "$bridge_name" type bridge stp_state 1
 
-	# Adiciona as interfaces físicas à Bridge
-	for iface in $interfaces; do
-		export iface
-		# Para adicionar uma interface (por exemplo, eth0) à ponte, seu estado deve ser up: eth0
-		ip link set "$iface" up
-		# A adição da interface à ponte é feita definindo seu mestre como: bridge_name
-		# Até aqui, a ponte já deve funcionar
-		ip link set "$iface" master "$bridge_name"
-	done
-	# Configurar IP na interface Bridge
-	if [ "$ip_config" == "1" ]; then
-		# Configura o IP fixo na interface Bridge
-		ip address add dev "$bridge_name" "$bridge_ip"
-		# Configura a máscara na interface Bridge
-		# shellcheck disable=SC2236
-		[[ "$bridge_mask" ]] && ip address add dev "$bridge_name" "$bridge_mask"
-		# Configura o Gateway	 na interface Bridge
-		# Verifica se bridge_gw está configurado e se a interface está ativa
-		if [[ "$bridge_gw" ]] && ip link show "$bridge_name" | grep -q "state UP"; then
-			ip route add default via "$bridge_gw" dev "$bridge_name" metric 100
-		fi
-	else
-		# Chama a função para configurar o IP via DHCPD na Interface Bridge
-		dhcpcd_ip_bridge
-	fi
+# Adiciona as interfaces físicas à Bridge
+for iface in $interfaces; do
+    export iface
+    echo "Ativando a interface $iface"
+    # Coloca a interface no estado UP
+    ip link set "$iface" up
+
+    echo "Adicionando a interface $iface à ponte $bridge_name"
+    # Define o mestre da interface como a ponte especificada, adicionando-a à bridge
+    ip link set "$iface" master "$bridge_name"
+done
+
+# Configurar IP na interface Bridge
+if [ "$ip_config" == "1" ]; then
+    echo "${cyan}Configurando IP fixo na ponte $bridge_name${reset}"
+    # Configura o IP fixo na interface Bridge
+    ip address add dev "$bridge_name" "$bridge_ip"
+
+    # Configura a máscara na interface Bridge
+    if [[ "$bridge_mask" ]]; then
+        echo "${cyan}Configurando a máscara de rede na ponte $bridge_name${reset}"
+        ip address add dev "$bridge_name" "$bridge_mask"
+    fi
+
+    # Configura o Gateway na interface Bridge
+    echo "${cyan}Verificando se o gateway $bridge_gw pode ser configurado${reset}"
+    if [[ "$bridge_gw" ]] && ip link show "$bridge_name" | grep -q "state UP"; then
+        echo "${cyan}Configurando o gateway $bridge_gw na ponte $bridge_name${reset}"
+        ip route add default via "$bridge_gw" dev "$bridge_name" metric 100
+    else
+        echo "${cyan}Ponte $bridge_name não está ativa ou gateway não configurado.${reset}"
+    fi
+else
+    # Chama a função para configurar o IP via DHCP na Interface Bridge
+    echo "${cyan}Configurando IP na ponte $bridge_name via DHCP${reset}"
+    dhcpcd_ip_bridge
+fi
+
 	# Exibe informações da interface de rede principal
 	echo "${cyan}Exibindo informações da interface de rede principal:${reset}"
 	ip addr show "$main_interface"
