@@ -175,23 +175,13 @@ set_bridge() {
 	set_interfaces
 	# Verifica se o usuário especificou um IP manualmente ou se o arquivo contém um IP
 	if [ -n "$bridge_ip" ]; then
+		local ip_config
 		ip_config="1"
 		export ip_config
 		export bridge_name
 		export bridge_ip
 		export bridge_mask
 		export bridge_gw
-	#  else
-	#     # Calcula o IP aumentado em 1 (maior que o IP da interface principal)
-	#     main_ip1=$(echo "$main_ip" | cut -d '.' -f 1)
-	#     main_ip2=$(echo "$main_ip" | cut -d '.' -f 2)
-	#     main_ip3=$(echo "$main_ip" | cut -d '.' -f 3)
-	#     main_ip_last_octet=$(echo "$main_ip" | cut -d '.' -f 4)
-	#     main_ip_last_octet_soma="$((1 + main_ip_last_octet))"
-	#     bridge_ip=${bridge_ip:-"$main_ip1.$main_ip2.$main_ip3.$main_ip_last_octet_soma/24"}
-	#     bridge_mask=${bridge_mask:-""}
-	#     bridge_gw=${bridge_gw:-"$main_route"}
-	#     export bridge_gw
 	fi
 }
 
@@ -211,19 +201,14 @@ create_bridge() {
 		# Até aqui, a ponte já deve funcionar
 		ip link set "$iface" master "$bridge_name"
 	done
-	# Chama a função para configurar IP na interface Bridge
-	set_ip_bridge
-}
-
-# Função para configurar IP na interface Bridge
-set_ip_bridge() {
+	# Configurar IP na interface Bridge
 	if [ "$ip_config" == "1" ]; then
 		# Configura o IP fixo na interface Bridge
 		ip address add dev "$bridge_name" "$bridge_ip"
 		# Configura a máscara na interface Bridge
 		# shellcheck disable=SC2236
 		[[ "$bridge_mask" ]] && ip address add dev "$bridge_name" "$bridge_mask"
-		# Configura o Gateway na interface Bridge
+		# Configura o Gateway	 na interface Bridge
 		[[ "$bridge_gw" ]] && ip route add default via "$bridge_gw" dev "$bridge_name" metric 100
 		else
 		# Chama a função para configurar o IP via DHCPD na Interface Bridge
@@ -252,7 +237,6 @@ set_ip_bridge() {
 	# Exibe uma lista das pontes de rede (network bridges) configuradas no sistema e suas interfaces associadas.
 	echo "${cyan}Listando as pontes de rede configuradas e interfaces associadas (brctl):${reset}"
 	brctl show
-
 }
 
 # Função para remover a interface Bridge
