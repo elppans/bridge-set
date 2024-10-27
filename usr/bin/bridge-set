@@ -311,7 +311,7 @@ remove_bridge() {
 restart_connection() {
 	# Chama a função para setar a interface
 	set_interfaces
-	for connection in $(nmcli -t -f NAME connection show --active | grep -vE '^(lo|veth|vmnet|vnet|virbr|br|docker)'); do
+	for connection in $(	); do
 		nmcli connection down "$connection"
 		nmcli connection up "$connection"
 	done
@@ -367,9 +367,9 @@ case "$bridge_options" in
 create_bridge | create | --create | -c)
 	check_superuser   # Chama a função para verificar se é superusuário
 	there_wifi create # Verifica se há uma interface Wi-Fi ativa e executa
-	restart_connection
 	create_bridge
 	disable_wakeup
+	restart_connection >> /dev/null
 	# test_connection &
 	;;
 # Remove a interface bridge
