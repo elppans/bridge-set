@@ -15,7 +15,7 @@ interfaces=""
 # O padrão para o nome da bridge costuma ser “br0”, mas você pode escolher um nome diferente, se desejar. 
 # O importante é que o nome seja único e não conflite com outros dispositivos de rede.
 # Exemplo: bridge_name="bridge0"
-bridge_name=""
+bridge_name="br0"
 
 # bridge_ip: Essa variável define o endereço IP fixo para a bridge.
 # Uso: Insira um endereço IP específico para a bridge e utilize um "prefixo de sub-rede"
@@ -23,7 +23,7 @@ bridge_name=""
 # Exemplo 1: `bridge_ip="10.10.1.100/8"` (endereço IP com prefixo de sub-rede Classe A, "/8" (255.0.0.0))
 # Exemplo 2: `bridge_ip="10.10.1.100/16"` (endereço IP com prefixo de sub-rede Classe B, "/16" (255.255.0.0))
 # Exemplo 1: `bridge_ip="192.168.1.100/24"` (endereço IP com prefixo de sub-rede Classe C, "/24" (255.255.255.0))
-bridge_ip=""
+bridge_ip="10.111.111.111/24"
 
 # bridge_mask: Esta variável define a máscara de sub-rede para a bridge.
 # Uso: Insira a máscara de sub-rede desejada (geralmente “255.255.255.0”).
@@ -36,22 +36,22 @@ bridge_mask=""
 # Uso: Se você deseja configurar um gateway específico para a bridge, insira-o aqui.
 # Exemplo: bridge_gw="192.168.1.1"
 # Observação: Se foi configurado "bridge_ip", deve configurar o Gateway em "bridge_gw".
-bridge_gw=""
+bridge_gw="10.111.111.1"
 
 # host_dns: Esta variável define a configuração de um site específico para usar como teste de comunicação.
 # Será feito um teste de comunicação com um site definido e caso não comunique, será reiniciado a rede Bridge.
 # Uso: defina um site onde será testado a comunicação DNS a cada "N" minutos
 # Padrão: cloudflare.com
 # Exemplo: host_dns="google.com"
-host_dns=""
+host_dns="cloudflare.com"
 
 # host_time: Esta variável define o tempo de teste de comunicação, a cada N segundos.
 # Padrão: 60 Segundos
 # Exemplo: host_time='300' # 5 Minutos
-host_time=""
+host_time="60"
 
 # bdhclient: Controla como o IP será atribuído à interface Bridge (br0) ao configurar a rede com Wi-Fi.
 # - Defina como 0 para usar a função 'find_free_ip', que detecta manualmente um IP livre no range da rede Wi-Fi.
 # - Defina como 1 para usar o 'dhclient', que obtém um IP automaticamente via DHCP.
 # Padrão: 0
-bdhclient=""
+bdhclient="0"
