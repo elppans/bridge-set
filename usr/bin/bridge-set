@@ -228,7 +228,7 @@ create_bridge() {
 		while [[ "$bridge_gw" ]] && [[ $attempt -le $max_attempts ]]; do
 			if ip link show "$bridge_name" | grep -q "state UP"; then
 				echo "${cyan}Tentativa $attempt: Configurando o gateway $bridge_gw na ponte $bridge_name${reset}"
-				ip route add default via "$bridge_gw" dev "$bridge_name" metric 100 && break
+				ip route replace default via "$bridge_gw" dev "$bridge_name" metric 100 && break
 			else
 				echo "${cyan}Tentativa $attempt: Ponte $bridge_name não está ativa ou gateway não configurado.${reset}"
 			fi
