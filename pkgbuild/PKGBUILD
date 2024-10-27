@@ -3,7 +3,7 @@
 # shellcheck disable=all
 
 pkgname=bridge-set
-pkgver=1.0.11
+pkgver=1.0.12
 pkgrel=1
 arch=('any')
 license=('CUSTOM')
