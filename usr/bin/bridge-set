@@ -169,29 +169,32 @@ set_interfaces() {
 	fi
 }
 
-# Função para configurar um IP livre ou especifico para a interface Bridge
-set_bridge() {
+# Função para criar a interface Bridge
+create_bridge() {
 	# Chama a função para setar a interface
 	set_interfaces
 	# Verifica se o usuário especificou um IP manualmente ou se o arquivo contém um IP
 	if [ -n "$bridge_ip" ]; then
 		local ip_config
 		ip_config="1"
-		export ip_config
-		export bridge_name
-		export bridge_ip
-		export bridge_mask
-		export bridge_gw
 	fi
-}
+	# Verifica se a ponte já existe para evitar duplicação
+	if ! ip link show "$bridge_name" &>/dev/null; then
+		# Cria a nova ponte
+		echo "${cyan}Criando a ponte: $bridge_name${reset}"
+		ip link add name "$bridge_name" type bridge
+	else
+		echo "${cyan}A ponte $bridge_name já existe.${reset}"
+	fi
 
-# Função para criar a interface Bridge
-create_bridge() {
-	# Chama a função para setar a interface Bridge
-	set_bridge
-	# Crie uma nova ponte e altere seu estado para up:
-	ip link add name "$bridge_name" type bridge
+	# Coloca a ponte no estado UP
+	echo "${cyan}Ativando a ponte $bridge_name${reset}"
 	ip link set dev "$bridge_name" up
+
+	# Ativa o Spanning Tree Protocol (STP) na ponte
+	echo "${cyan}Ativando STP na ponte $bridge_name${reset}"
+	ip link set dev "$bridge_name" type bridge stp_state 1
+
 	# Adiciona as interfaces físicas à Bridge
 	for iface in $interfaces; do
 		export iface
@@ -209,15 +212,14 @@ create_bridge() {
 		# shellcheck disable=SC2236
 		[[ "$bridge_mask" ]] && ip address add dev "$bridge_name" "$bridge_mask"
 		# Configura o Gateway	 na interface Bridge
-		[[ "$bridge_gw" ]] && ip route add default via "$bridge_gw" dev "$bridge_name" metric 100
-		else
+		# Verifica se bridge_gw está configurado e se a interface está ativa
+		if [[ "$bridge_gw" ]] && ip link show "$bridge_name" | grep -q "state UP"; then
+			ip route add default via "$bridge_gw" dev "$bridge_name" metric 100
+		fi
+	else
 		# Chama a função para configurar o IP via DHCPD na Interface Bridge
 		dhcpcd_ip_bridge
 	fi
-	# Remover Default Gateway da interface de rede
-	# ip route del default via "$bridge_gw" dev "$main_interface"
-	# Remover IP da interface de rede
-	# ip addr del "$main_ip" dev "$main_interface"
 	# Exibe informações da interface de rede principal
 	echo "${cyan}Exibindo informações da interface de rede principal:${reset}"
 	ip addr show "$main_interface"
