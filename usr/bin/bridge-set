@@ -16,10 +16,10 @@ readonly DEPENDENCIES=(ip nmcli tput gettext dhclient)
 setVarColors() {
 	# shellcheck disable=SC2034
 	# Checar se o terminal suporta cores e inicializar `tput`
-	if command -v tput &> /dev/null; then
-		local colors=(black 0 red 196 green 2 yellow 3 blue 4 pink 5 magenta 5 \
-			cyan 6 white 7 gray 8 orange 202 purple 125 violet 61 \
-			light_red 9 light_green 10 light_yellow 11 light_blue 12 \
+	if command -v tput &>/dev/null; then
+		local colors=(black 0 red 196 green 2 yellow 3 blue 4 pink 5 magenta 5
+			cyan 6 white 7 gray 8 orange 202 purple 125 violet 61
+			light_red 9 light_green 10 light_yellow 11 light_blue 12
 			light_magenta 13 light_cyan 14 bright_white 15)
 
 		# Variáveis de estilo
@@ -30,8 +30,8 @@ setVarColors() {
 		reverse=$(tput rev)
 
 		# Inicializar as cores no array
-		for ((i = 0; i < ${#colors[@]}; i+=2)); do
-			declare -g "${colors[i]}"="${bold}$(tput setaf "${colors[i+1]}")"
+		for ((i = 0; i < ${#colors[@]}; i += 2)); do
+			declare -g "${colors[i]}"="${bold}$(tput setaf "${colors[i + 1]}")"
 		done
 	else
 		# Mensagem de erro se `tput` não for suportado
@@ -239,16 +239,26 @@ set_ip_bridge() {
 	sudo ip route del default via "$bridge_gw" dev "$main_interface"
 	# Remover IP da interface de rede
 	sudo ip addr del "$main_ip" dev "$main_interface"
-	# Exibe informações da interface de rede
+	# Exibe informações da interface de rede principal
+	echo "Exibindo informações da interface de rede principal:"
 	ip addr show "$main_interface"
+
 	# Exibe as informações da interface Bridge
+	echo "Exibindo informações da interface Bridge:"
 	ip addr show "$bridge_name"
+
 	# Exibe as informações da rota
+	echo "Exibindo informações de rotas configuradas no sistema:"
 	ip route
+
 	# Mostrar as bridges existentes e as interfaces associadas, usando o utilitário bridge (parte do iproute2).
+	echo "Listando as bridges existentes e suas interfaces associadas (utilitário bridge):"
 	bridge link
+
 	# Exibe uma lista das pontes de rede (network bridges) configuradas no sistema e suas interfaces associadas.
+	echo "Listando as pontes de rede configuradas e interfaces associadas (brctl):"
 	brctl show
+
 }
 
 # Função para remover a interface Bridge
