@@ -247,6 +247,8 @@ set_ip_bridge() {
 	ip route
 	# Mostrar as bridges existentes e as interfaces associadas, usando o utilitário bridge (parte do iproute2).
 	bridge link
+	# Exibe uma lista das pontes de rede (network bridges) configuradas no sistema e suas interfaces associadas.
+	brctl show
 }
 
 # Função para remover a interface Bridge
