@@ -177,6 +177,10 @@ set_bridge() {
 	if [ -n "$bridge_ip" ]; then
 		ip_config="1"
 		export ip_config
+		export bridge_name
+		export bridge_ip
+		export bridge_mask
+		export bridge_gw
 	#  else
 	#     # Calcula o IP aumentado em 1 (maior que o IP da interface principal)
 	#     main_ip1=$(echo "$main_ip" | cut -d '.' -f 1)
