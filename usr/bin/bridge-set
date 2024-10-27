@@ -253,9 +253,12 @@ create_bridge() {
 		dhcpcd_ip_bridge
 	fi
 
-	# Exibe informações da interface de rede principal
-	echo "${cyan}Exibindo informações da interface de rede principal:${reset}"
-	ip addr show "$main_interface"
+	# Exibe informações da(s) interfaces físicas
+	for iface in $interfaces; do
+		export iface
+	echo "${cyan}Exibindo informações da interface de rede $iface:${reset}"
+	ip addr show "$iface"
+	done
 
 	# Exibe as informações da interface Bridge
 	echo "${cyan}Exibindo informações da interface Bridge:${reset}"
@@ -281,15 +284,23 @@ remove_bridge() {
 	echo "${cyan}Desativando a ponte $bridge_name...${reset}"
 	sudo ip link set "$bridge_name" down
 
-	echo "${cyan}Removendo a interface $main_interface da ponte $bridge_name...${reset}"
-	sudo brctl delif "$bridge_name" "$main_interface"
+	# Exibindo informações da(s) interfaces físicas
+	for iface in $interfaces; do
+		export iface
+	echo "${cyan}Removendo a interface $iface da ponte $bridge_name...${reset}"
+	sudo brctl delif "$bridge_name" "$iface"
+	done
 
 	echo "${cyan}Removendo a ponte $bridge_name...${reset}"
 	sudo brctl delbr "$bridge_name"
 
 	# Exibe informações da interface de rede
-	echo "${cyan}Exibindo informações da interface de rede $main_interface...${reset}"
-	ip addr show "$main_interface"
+	# Exibindo informações da(s) interfaces físicas
+	for iface in $interfaces; do
+		export iface
+	echo "${cyan}Exibindo informações da interface de rede $iface...${reset}"
+	ip addr show "$iface"
+	done
 
 	# Exibe as informações da rota
 	echo "${cyan}Exibindo informações da rota...${reset}"
