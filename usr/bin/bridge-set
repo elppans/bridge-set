@@ -178,6 +178,7 @@ create_bridge() {
 		local ip_config
 		ip_config="1"
 	fi
+
 	# Verifica se a ponte já existe para evitar duplicação
 	if ! ip link show "$bridge_name" &>/dev/null; then
 		# Cria a nova ponte
@@ -187,17 +188,12 @@ create_bridge() {
 		echo "${cyan}A ponte $bridge_name já existe.${reset}"
 	fi
 
-	# Coloca a ponte no estado UP
-	echo "${cyan}Ativando a ponte $bridge_name${reset}"
-	ip link set dev "$bridge_name" up
-
-	# Ativa o Spanning Tree Protocol (STP) na ponte
-	echo "${cyan}Ativando STP na ponte $bridge_name${reset}"
-	ip link set dev "$bridge_name" type bridge stp_state 1
-
 	# Adiciona as interfaces físicas à Bridge
 	for iface in $interfaces; do
 		export iface
+		# Desassocia a interface Wi-Fi de qualquer bridge existente
+        ip link set "$iface" nomaster
+
 		echo "Ativando a interface $iface"
 		# Coloca a interface no estado UP
 		ip link set "$iface" up
@@ -206,6 +202,13 @@ create_bridge() {
 		# Define o mestre da interface como a ponte especificada, adicionando-a à bridge
 		ip link set "$iface" master "$bridge_name"
 	done
+
+	# Coloca a ponte no estado UP
+	echo "${cyan}Ativando a ponte $bridge_name${reset}"
+
+	# Ativa o Spanning Tree Protocol (STP) na ponte
+	echo "${cyan}Ativando STP na ponte $bridge_name${reset}"
+	ip link set dev "$bridge_name" type bridge stp_state 1
 
 	# Configurar IP na interface Bridge
 	if [ "$ip_config" == "1" ]; then
