@@ -194,17 +194,18 @@ create_bridge() {
 		# Desassocia a interface Wi-Fi de qualquer bridge existente
         ip link set "$iface" nomaster
 
-		echo "Ativando a interface $iface"
+		echo "${cyan}Ativando a interface $iface${reset}"
 		# Coloca a interface no estado UP
 		ip link set "$iface" up
 
-		echo "Adicionando a interface $iface à ponte $bridge_name"
+		echo "${cyan}Adicionando a interface $iface à ponte $bridge_name${reset}"
 		# Define o mestre da interface como a ponte especificada, adicionando-a à bridge
 		ip link set "$iface" master "$bridge_name"
 	done
 
 	# Coloca a ponte no estado UP
 	echo "${cyan}Ativando a ponte $bridge_name${reset}"
+	ip link set dev "$bridge_name" up
 
 	# Ativa o Spanning Tree Protocol (STP) na ponte
 	echo "${cyan}Ativando STP na ponte $bridge_name${reset}"
