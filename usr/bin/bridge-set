@@ -188,6 +188,10 @@ create_bridge() {
 		echo "${cyan}A ponte $bridge_name já existe.${reset}"
 	fi
 
+	# Ativa o Spanning Tree Protocol (STP) na ponte
+	echo "${cyan}Ativando STP na ponte $bridge_name${reset}"
+	ip link set dev "$bridge_name" type bridge stp_state 1
+
 	# Adiciona as interfaces físicas à Bridge
 	for iface in $interfaces; do
 		export iface
@@ -243,10 +247,6 @@ create_bridge() {
 			echo "${red}Erro: Não foi possível configurar o gateway $bridge_gw na ponte $bridge_name após $max_attempts tentativas.${reset}"
 		fi
 
-		# Ativa o Spanning Tree Protocol (STP) na ponte
-		echo "${cyan}Ativando STP na ponte $bridge_name${reset}"
-		ip link set dev "$bridge_name" type bridge stp_state 1
-
 	else
 		# Chama a função para configurar o IP via DHCP na Interface Bridge
 		echo "${cyan}Configurando IP na ponte $bridge_name via DHCP${reset}"
@@ -266,8 +266,8 @@ create_bridge() {
 	ip route
 
 	# Mostrar as bridges existentes e as interfaces associadas, usando o utilitário bridge (parte do iproute2).
-	echo "${cyan}Listando as bridges existentes e suas interfaces associadas (utilitário bridge):${reset}"
-	bridge link
+	# echo "${cyan}Listando as bridges existentes e suas interfaces associadas (utilitário bridge):${reset}"
+	# bridge link
 
 	# Exibe uma lista das pontes de rede (network bridges) configuradas no sistema e suas interfaces associadas.
 	echo "${cyan}Listando as pontes de rede configuradas e interfaces associadas (brctl):${reset}"
@@ -278,12 +278,21 @@ create_bridge() {
 remove_bridge() {
 	# Chama a função para setar a interface
 	set_interfaces
+	echo "${cyan}Desativando a ponte $bridge_name...${reset}"
 	sudo ip link set "$bridge_name" down
+
+	echo "${cyan}Removendo a interface $main_interface da ponte $bridge_name...${reset}"
 	sudo brctl delif "$bridge_name" "$main_interface"
+
+	echo "${cyan}Removendo a ponte $bridge_name...${reset}"
 	sudo brctl delbr "$bridge_name"
+
 	# Exibe informações da interface de rede
+	echo "${cyan}Exibindo informações da interface de rede $main_interface...${reset}"
 	ip addr show "$main_interface"
+
 	# Exibe as informações da rota
+	echo "${cyan}Exibindo informações da rota...${reset}"
 	ip route
 }
 
@@ -350,7 +359,7 @@ create_bridge | create | --create | -c)
 	restart_connection
 	create_bridge
 	disable_wakeup
-	test_connection &
+	# test_connection &
 	;;
 # Remove a interface bridge
 stop_bridge | stop | --stop | -s)
