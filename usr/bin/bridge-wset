@@ -303,36 +303,54 @@ check_libvirt_dnsmasq() {
 # Função para configurar o dnsmasq
 configure_dnsmasq() {
     dnsmasq_conf="/etc/dnsmasq.conf"
+    # bridge_name="br0"
+    # base_ip="192.168.15"
     br0_config="interface=$bridge_name"
-    ip_range_config="dhcp-range=${base_ip}.10,${base_ip}.200,255.255.255.0,24h"
+    ip_range_config="dhcp-range=${base_ip}.10,${base_ip}.200,24h"
 
-    # Verifica se a configuração já existe no dnsmasq.conf
-    existing_br0=$(grep -Fx "$br0_config" "$dnsmasq_conf")
-    existing_ip_range=$(grep -Fx "$ip_range_config" "$dnsmasq_conf")
+    # Configurações para ativar a função de servidor DNS local
+    route_ip="$(ip route | grep default | awk '{print $3}')"
+    new_config=(
+        "$br0_config"
+        "$ip_range_config"
+        "listen-address=127.0.0.1"
+        "listen-address=$route_ip"
+        "server=8.8.8.8"
+        "server=8.8.4.4"
+        "server=1.1.1.1"
+        "server=1.0.0.1"
+        "server=9.9.9.9"
+        "domain=local"
+        "expand-hosts"
+        "cache-size=1000"
+    )
 
+    # Função para adicionar configurações ao dnsmasq.conf
     add_config() {
-        echo "Adicionando nova configuração ao dnsmasq..."
-        echo "$br0_config" >>"$dnsmasq_conf"
-        echo "$ip_range_config" >>"$dnsmasq_conf"
+        echo "Adicionando novas configurações ao dnsmasq..."
+        for line in "${new_config[@]}"; do
+            echo "$line" | sudo tee -a "$dnsmasq_conf" >/dev/null
+        done
     }
 
-    if [[ -n "$existing_br0" && -n "$existing_ip_range" ]]; then
-        echo "As configurações já existem no dnsmasq."
-
-        if [[ "$existing_br0" == "$br0_config" && "$existing_ip_range" == "$ip_range_config" ]]; then
-            echo "As configurações são iguais. Reiniciando o serviço dnsmasq..."
-        else
-            echo "As configurações são diferentes. Removendo as antigas e aplicando as novas..."
-            sed -i "/interface=$bridge_name/d" "$dnsmasq_conf"
-            sed -i "/dhcp-range=${base_ip}/d" "$dnsmasq_conf"
-            add_config
-        fi
-    else
-        echo "A configuração não existe. Adicionando ao dnsmasq..."
-        add_config
+    # Backup do arquivo de configuração, se necessário
+    if [[ ! -f "${dnsmasq_conf}.bak" ]]; then
+        sudo cp "$dnsmasq_conf" "${dnsmasq_conf}.bak"
+        echo "Backup criado em ${dnsmasq_conf}.bak"
     fi
 
-    # Reinicia o serviço dnsmasq
+    # Verifica se cada configuração existe no arquivo, removendo antigas duplicadas se necessário
+    for line in "${new_config[@]}"; do
+        if ! grep -Fxq "$line" "$dnsmasq_conf"; then
+            # Se a configuração não existe, adiciona ao arquivo
+            add_config
+            echo "Nova configuração adicionada: $line"
+        else
+            echo "Configuração já existe: $line"
+        fi
+    done
+
+    # Reinicia o serviço dnsmasq para aplicar as mudanças
     systemctl stop dnsmasq
     systemctl start dnsmasq
     systemctl is-active --quiet dnsmasq &&
@@ -378,7 +396,7 @@ configure_nat_forwarding() {
     iptables -t mangle -F
     iptables -X
 
-        # Permitir tráfego na Bridge
+    # Permitir tráfego na Bridge
     iptables -A FORWARD -i "$bridge_name" -j ACCEPT
     iptables -A FORWARD -o "$bridge_name" -j ACCEPT
 
@@ -386,7 +404,7 @@ configure_nat_forwarding() {
     iptables -A INPUT -i "$main_winterface" -j ACCEPT
     iptables -A OUTPUT -o "$main_winterface" -j ACCEPT
 
-        # Permitir encaminhamento entre a bridge e a interface física
+    # Permitir encaminhamento entre a bridge e a interface física
     iptables -A FORWARD -i "$bridge_name" -o "$main_winterface" -j ACCEPT
     iptables -A FORWARD -i "$main_winterface" -o "$bridge_name" -j ACCEPT
 
