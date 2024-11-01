@@ -388,6 +388,9 @@ configure_dnsmasq() {
     dnsmasq_conf="/etc/dnsmasq.conf"
     # bridge_name="br0"
     # base_ip="192.168.15"
+	# Extrai a base do IP da rede (os três primeiros octetos)
+    base_ip="$(ip addr show dev "$main_interface" | awk '/inet / {print $2}' | cut -d'.' -f1-3)"
+
     br0_config="interface=$bridge_name"
     ip_range_config="dhcp-range=${base_ip}.10,${base_ip}.200,24h"
 
