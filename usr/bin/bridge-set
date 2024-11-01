@@ -191,6 +191,11 @@ create_bridge() {
 	# Adiciona as interfaces físicas à Bridge
 	for iface in $interfaces; do
 		export iface
+
+		# Remove o IP da Interface para evitar conflito com a Bridge
+		ifaceip="$(ip addr show dev "$iface" | awk '/inet / {print $2}')"
+		ip addr del "$ifaceip" dev "$iface"
+
 		# Desassocia a interface Wi-Fi de qualquer bridge existente
 		ip link set "$iface" nomaster
 
@@ -351,6 +356,91 @@ disable_wakeup() {
 	fi
 }
 
+# Função para verificar se dnsmasq está em execução e se é gerenciado pelo libvirt
+check_libvirt_dnsmasq() {
+    # Lista todas as redes do libvirt, incluindo as inativas
+    networks=$(sudo virsh net-list --all)
+
+    # Verifica se a rede 'default' está presente
+    if echo "$networks" | grep -q 'default'; then
+        echo "Rede 'default' do libvirt encontrada."
+
+        # Procura por processos dnsmasq e verifica se são gerenciados pelo libvirt
+        # shellcheck disable=SC2009
+        dnsmasq_process=$(ps aux | grep '[d]nsmasq' | grep libvirt)
+
+        if [[ -n "$dnsmasq_process" ]]; then
+            echo "O dnsmasq está em execução e é gerenciado pelo libvirt."
+
+            # Desativa a rede 'default' do libvirt
+            virsh net-destroy default &>>/dev/null
+            echo "Rede 'default' do libvirt foi desativada."
+        else
+            echo "O dnsmasq não está sendo executado pelo libvirt."
+        fi
+    # else
+    #     echo "Rede 'default' do libvirt não encontrada."
+    fi
+}
+
+# Função para configurar o dnsmasq
+configure_dnsmasq() {
+    dnsmasq_conf="/etc/dnsmasq.conf"
+    # bridge_name="br0"
+    # base_ip="192.168.15"
+    br0_config="interface=$bridge_name"
+    ip_range_config="dhcp-range=${base_ip}.10,${base_ip}.200,24h"
+
+    # Configurações para ativar a função de servidor DNS local
+    route_ip="$(ip route | grep default | awk '{print $3}')"
+    new_config=(
+        "$br0_config"
+        "$ip_range_config"
+        "listen-address=127.0.0.1"
+        "listen-address=$route_ip"
+        "server=8.8.8.8"
+        "server=8.8.4.4"
+        "server=1.1.1.1"
+        "server=1.0.0.1"
+        "server=9.9.9.9"
+        "domain=local"
+        "expand-hosts"
+        "cache-size=1000"
+    )
+
+    # Função para adicionar configurações ao dnsmasq.conf
+    add_config() {
+        echo "Adicionando novas configurações ao dnsmasq..."
+        for line in "${new_config[@]}"; do
+            echo "$line" | sudo tee -a "$dnsmasq_conf" >/dev/null
+        done
+    }
+
+    # Backup do arquivo de configuração, se necessário
+    if [[ ! -f "${dnsmasq_conf}.bak" ]]; then
+        sudo cp "$dnsmasq_conf" "${dnsmasq_conf}.bak"
+        echo "Backup criado em ${dnsmasq_conf}.bak"
+    fi
+
+    # Verifica se cada configuração existe no arquivo, removendo antigas duplicadas se necessário
+    for line in "${new_config[@]}"; do
+        if ! grep -Fxq "$line" "$dnsmasq_conf"; then
+            # Se a configuração não existe, adiciona ao arquivo
+            add_config
+            echo "Nova configuração adicionada: $line"
+        else
+            echo "Configuração já existe: $line"
+        fi
+    done
+
+    # Reinicia o serviço dnsmasq para aplicar as mudanças
+    systemctl stop dnsmasq
+    systemctl start dnsmasq
+    systemctl is-active --quiet dnsmasq &&
+        echo "dnsmasq reiniciado com sucesso" ||
+        echo "Falha ao reiniciar o dnsmasq"
+}
+
 setVarColors
 checkDependencies
 
@@ -378,6 +468,8 @@ create_bridge | create | --create | -c)
 	there_wifi create # Verifica se há uma interface Wi-Fi ativa e executa
 	create_bridge
 	disable_wakeup
+	check_libvirt_dnsmasq
+    configure_dnsmasq
 	restart_connection >> /dev/null
 	# test_connection &
 	;;
