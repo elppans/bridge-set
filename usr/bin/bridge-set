@@ -385,6 +385,8 @@ check_libvirt_dnsmasq() {
 
 # Função para configurar o dnsmasq
 configure_dnsmasq() {
+	# Chama a função para setar a interface
+	set_interfaces
     dnsmasq_conf="/etc/dnsmasq.conf"
     # bridge_name="br0"
     # base_ip="192.168.15"
