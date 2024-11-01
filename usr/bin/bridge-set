@@ -436,7 +436,7 @@ configure_dnsmasq() {
             add_config
             echo "Nova configuração adicionada: $line"
         else
-            echo "Configuração já existe: $line"
+            echo "Configuração Ok: $line"
         fi
     done
 
